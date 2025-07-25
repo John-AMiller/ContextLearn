@@ -1,0 +1,64 @@
+{
+  "id": "es-sandwich-order",
+  "title": "Ordering a Sandwich",
+  "scenario": "restaurant",
+  "language": "spanish",
+  "difficulty": 1,
+  "tags": ["food", "restaurant", "basic"],
+  "culturalNotes": "In many Spanish-speaking countries, lunch is the main meal. Sandwiches (bocadillos) are popular for a lighter meal.",
+  "phrases": [
+    {
+      "id": "es-1",
+      "phrase": "Quisiera un sándwich, por favor",
+      "translation": "I'd like a sandwich, please",
+      "literal": "I would like a sandwich, please",
+      "pronunciation": "kee-see-EH-rah oon SAHN-dweech, por fah-VOR"
+    },
+    {
+      "id": "es-2",
+      "phrase": "¿Qué tipo de pan tienen?",
+      "translation": "What type of bread do you have?",
+      "literal": "What type of bread have you?",
+      "pronunciation": "keh TEE-poh deh pahn tee-EH-nen"
+    },
+    {
+      "id": "es-3",
+      "phrase": "Sin tomate, por favor",
+      "translation": "Without tomato, please",
+      "literal": "Without tomato, please",
+      "pronunciation": "seen toh-MAH-teh, por fah-VOR"
+    },
+    {
+      "id": "es-4",
+      "phrase": "¿Cuánto cuesta?",
+      "translation": "How much does it cost?",
+      "literal": "How much costs?",
+      "pronunciation": "KWAHN-toh KWES-tah"
+    }
+  ],
+  "variations": {
+    "formal": [
+      "Disculpe, ¿podría prepararme un sándwich sin cebolla?"
+    ],
+    "informal": [
+      "Oye, ¿me haces un sándwich sin cebolla?"
+    ],
+    "regional": {
+      "mexico": {
+        "region": "Mexico",
+        "phrases": ["torta", "bolillo", "telera"],
+        "notes": "In Mexico, sandwiches are often called 'tortas'"
+      },
+      "spain": {
+        "region": "Spain", 
+        "phrases": ["bocadillo", "bocata"],
+        "notes": "In Spain, sandwiches are called 'bocadillos'"
+      },
+      "argentina": {
+        "region": "Argentina",
+        "phrases": ["sándwich de miga", "tostado"],
+        "notes": "Argentina has unique sandwich styles"
+      }
+    }
+  }
+}
