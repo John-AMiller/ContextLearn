@@ -12,9 +12,10 @@ interface LanguageContextType {
 export const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [currentLanguage, setCurrentLanguage] = useState('spanish');
-  const [nativeLanguage, setNativeLanguage] = useState('english');
-  const availableLanguages = ['english', 'spanish', 'italian'];
+  // Don't default these - let them be empty until user sets them up
+  const [currentLanguage, setCurrentLanguage] = useState('');
+  const [nativeLanguage, setNativeLanguage] = useState('');
+  const availableLanguages = ['english', 'spanish', 'french', 'german', 'italian', 'portuguese'];
 
   useEffect(() => {
     loadLanguagePreferences();
@@ -24,6 +25,8 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     try {
       const current = await AsyncStorage.getItem('currentLanguage');
       const native = await AsyncStorage.getItem('nativeLanguage');
+      
+      // Only set if values exist
       if (current) setCurrentLanguage(current);
       if (native) setNativeLanguage(native);
     } catch (error) {

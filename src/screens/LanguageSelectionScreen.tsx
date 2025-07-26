@@ -3,174 +3,71 @@ import {
   View, 
   Text, 
   StyleSheet, 
-  ScrollView,
-  TouchableOpacity,
-  Alert
+  ScrollView, 
+  TouchableOpacity 
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { RootStackNavigationProp } from '@/types/navigation';
-import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/hooks/useLanguage';
-import { Button } from '@/components/common/Button';
 import { Card } from '@/components/common/Card';
 import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
-import { getLanguageFlag } from '@/utils/helpers';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { supabase } from '@/utils/supabase';
 
-const AVAILABLE_LANGUAGES = [
-  { code: 'spanish', name: 'Spanish', flag: '🇪🇸', native: 'Español' },
-  { code: 'italian', name: 'Italian', flag: '🇮🇹', native: 'Italiano' },
-  { code: 'french', name: 'French', flag: '🇫🇷', native: 'Français' },
-  { code: 'german', name: 'German', flag: '🇩🇪', native: 'Deutsch' },
-  { code: 'portuguese', name: 'Portuguese', flag: '🇵🇹', native: 'Português' },
-  { code: 'chinese', name: 'Chinese', flag: '🇨🇳', native: '中文' },
-  { code: 'japanese', name: 'Japanese', flag: '🇯🇵', native: '日本語' },
-  { code: 'korean', name: 'Korean', flag: '🇰🇷', native: '한국어' },
-];
-
-const NATIVE_LANGUAGES = [
-  { code: 'english', name: 'English', flag: '🇬🇧' },
-  { code: 'spanish', name: 'Spanish', flag: '🇪🇸' },
-  { code: 'french', name: 'French', flag: '🇫🇷' },
-  { code: 'german', name: 'German', flag: '🇩🇪' },
-  { code: 'portuguese', name: 'Portuguese', flag: '🇵🇹' },
-  { code: 'chinese', name: 'Chinese', flag: '🇨🇳' },
+const APP_LANGUAGES = [
+  { code: 'english', name: 'English', flag: '🇺🇸' },
+  { code: 'spanish', name: 'Español', flag: '🇪🇸' },
+  { code: 'french', name: 'Français', flag: '🇫🇷' },
+  { code: 'german', name: 'Deutsch', flag: '🇩🇪' },
+  { code: 'italian', name: 'Italiano', flag: '🇮🇹' },
 ];
 
 export const LanguageSelectionScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
-  const { user, updateProfile } = useAuth();
-  const { setCurrentLanguage, setNativeLanguage } = useLanguage();
-  const [selectedNative, setSelectedNative] = useState('english');
-  const [selectedLearning, setSelectedLearning] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const { nativeLanguage, setNativeLanguage } = useLanguage();
+  const [selectedLanguage, setSelectedLanguage] = useState(nativeLanguage);
 
-  const toggleLanguage = (langCode: string) => {
-    if (selectedLearning.includes(langCode)) {
-      setSelectedLearning(selectedLearning.filter(l => l !== langCode));
-    } else {
-      setSelectedLearning([...selectedLearning, langCode]);
-    }
-  };
-
-  const handleContinue = async () => {
-    if (selectedLearning.length === 0) {
-      Alert.alert('Select Languages', 'Please select at least one language to learn.');
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      // Update user profile in Supabase
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          native_language: selectedNative,
-          learning_languages: selectedLearning,
-        })
-        .eq('id', user?.id);
-
-      if (error) throw error;
-
-      // Update local state
-      setNativeLanguage(selectedNative);
-      setCurrentLanguage(selectedLearning[0]);
-      
-      // Update auth context
-      await updateProfile({
-        nativeLanguage: selectedNative,
-        learningLanguages: selectedLearning,
-      });
-
-      navigation.navigate('Main');
-    } catch (error) {
-      Alert.alert('Error', 'Failed to save language preferences');
-    } finally {
-      setIsLoading(false);
-    }
+  const handleSave = () => {
+    setNativeLanguage(selectedLanguage);
+    navigation.goBack();
   };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Welcome to ContextLearn!</Text>
-          <Text style={styles.subtitle}>Let's set up your languages</Text>
-        </View>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Icon name="arrow-left" size={24} color={Colors.primary} />
+        </TouchableOpacity>
+        <Text style={styles.title}>App Language</Text>
+        <TouchableOpacity onPress={handleSave}>
+          <Text style={styles.saveText}>Save</Text>
+        </TouchableOpacity>
+      </View>
 
+      <ScrollView style={styles.content}>
         <Card>
-          <Text style={styles.sectionTitle}>I speak:</Text>
-          <View style={styles.languageGrid}>
-            {NATIVE_LANGUAGES.map((lang) => (
-              <TouchableOpacity
-                key={lang.code}
-                style={[
-                  styles.languageOption,
-                  selectedNative === lang.code && styles.languageOptionSelected
-                ]}
-                onPress={() => setSelectedNative(lang.code)}
-              >
-                <Text style={styles.languageFlag}>{lang.flag}</Text>
-                <Text style={[
-                  styles.languageName,
-                  selectedNative === lang.code && styles.languageNameSelected
-                ]}>
-                  {lang.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </Card>
-
-        <Card>
-          <Text style={styles.sectionTitle}>I want to learn:</Text>
-          <Text style={styles.hint}>Select all languages you're interested in</Text>
-          <View style={styles.languageGrid}>
-            {AVAILABLE_LANGUAGES.map((lang) => (
-              <TouchableOpacity
-                key={lang.code}
-                style={[
-                  styles.languageOption,
-                  selectedLearning.includes(lang.code) && styles.languageOptionSelected
-                ]}
-                onPress={() => toggleLanguage(lang.code)}
-                disabled={lang.code === selectedNative}
-              >
-                <Text style={styles.languageFlag}>{lang.flag}</Text>
-                <Text style={[
-                  styles.languageName,
-                  selectedLearning.includes(lang.code) && styles.languageNameSelected,
-                  lang.code === selectedNative && styles.languageNameDisabled
-                ]}>
-                  {lang.name}
-                </Text>
-                {selectedLearning.includes(lang.code) && (
-                  <Icon 
-                    name="check-circle" 
-                    size={20} 
-                    color={Colors.primary} 
-                    style={styles.checkIcon}
-                  />
-                )}
-              </TouchableOpacity>
-            ))}
-          </View>
-        </Card>
-
-        <View style={styles.footer}>
-          <Button
-            title="Continue"
-            onPress={handleContinue}
-            loading={isLoading}
-            disabled={selectedLearning.length === 0}
-          />
-          <Text style={styles.footerText}>
-            You can add or change languages anytime in settings
+          <Text style={styles.description}>
+            Choose the language for the app interface. This doesn't affect your learning languages.
           </Text>
-        </View>
+          
+          {APP_LANGUAGES.map((lang) => (
+            <TouchableOpacity
+              key={lang.code}
+              style={[
+                styles.languageOption,
+                selectedLanguage === lang.code && styles.languageOptionSelected
+              ]}
+              onPress={() => setSelectedLanguage(lang.code)}
+            >
+              <Text style={styles.languageFlag}>{lang.flag}</Text>
+              <Text style={styles.languageName}>{lang.name}</Text>
+              {selectedLanguage === lang.code && (
+                <Icon name="check" size={20} color={Colors.primary} />
+              )}
+            </TouchableOpacity>
+          ))}
+        </Card>
       </ScrollView>
     </SafeAreaView>
   );
@@ -182,80 +79,50 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
   },
   header: {
-    padding: Layout.spacing.lg,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: Layout.spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: Colors.text,
-    marginBottom: Layout.spacing.sm,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: Colors.textSecondary,
-  },
-  sectionTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '600',
     color: Colors.text,
-    marginBottom: Layout.spacing.sm,
   },
-  hint: {
+  saveText: {
+    fontSize: 16,
+    color: Colors.primary,
+    fontWeight: '500',
+  },
+  content: {
+    flex: 1,
+    padding: Layout.spacing.lg,
+  },
+  description: {
     fontSize: 14,
     color: Colors.textSecondary,
-    marginBottom: Layout.spacing.md,
-  },
-  languageGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Layout.spacing.md,
+    marginBottom: Layout.spacing.lg,
+    lineHeight: 20,
   },
   languageOption: {
-    width: '28%',
-    aspectRatio: 1,
-    backgroundColor: Colors.background,
-    borderRadius: Layout.borderRadius.lg,
-    borderWidth: 2,
-    borderColor: Colors.border,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: Layout.spacing.sm,
+    paddingVertical: Layout.spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.divider,
   },
   languageOptionSelected: {
-    borderColor: Colors.primary,
     backgroundColor: Colors.surface,
   },
   languageFlag: {
-    fontSize: 32,
-    marginBottom: Layout.spacing.xs,
+    fontSize: 24,
+    marginRight: Layout.spacing.md,
   },
   languageName: {
-    fontSize: 14,
+    flex: 1,
+    fontSize: 16,
     color: Colors.text,
-    textAlign: 'center',
-  },
-  languageNameSelected: {
-    color: Colors.primary,
-    fontWeight: '600',
-  },
-  languageNameDisabled: {
-    color: Colors.textSecondary,
-    opacity: 0.5,
-  },
-  checkIcon: {
-    position: 'absolute',
-    top: Layout.spacing.xs,
-    right: Layout.spacing.xs,
-  },
-  footer: {
-    padding: Layout.spacing.lg,
-    alignItems: 'center',
-  },
-  footerText: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    marginTop: Layout.spacing.md,
-    textAlign: 'center',
   },
 });

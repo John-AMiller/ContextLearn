@@ -1,7 +1,7 @@
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import { UserProgress, CompletedScenario } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
-import { useLanguage } from '@/hooks/useLanguage'; // Add this import
+import { useLanguage } from '@/hooks/useLanguage'; 
 import * as storageService from '@/services/storage.service';
 import * as streakService from '@/services/streak.service';
 import { supabase } from '@/utils/supabase';
@@ -21,8 +21,13 @@ interface ProgressContextType {
 export const ProgressContext = createContext<ProgressContextType | undefined>(undefined);
 
 export const ProgressProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { user } = useAuth();
-  const { currentLanguage } = useLanguage(); // Get currentLanguage from LanguageContext
+  const authContext = useAuth();
+  const languageContext = useLanguage();
+  
+  // Add safety checks
+  const user = authContext?.user;
+  const currentLanguage = languageContext?.currentLanguage;
+  
   const [completedScenarios, setCompletedScenarios] = useState<CompletedScenario[]>([]);
   const [streak, setStreak] = useState(0);
   const [longestStreak, setLongestStreak] = useState(0);
@@ -30,16 +35,21 @@ export const ProgressProvider: React.FC<{ children: ReactNode }> = ({ children }
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
-      loadProgress();
-      loadStreak();
-    } else {
-      setCompletedScenarios([]);
-      setStreak(0);
-      setLongestStreak(0);
-      setTotalXP(0);
+    // Only run if contexts are available
+    if (authContext && languageContext) {
+      if (user) {
+        loadProgress();
+        loadStreak();
+      } else {
+        setCompletedScenarios([]);
+        setStreak(0);
+        setLongestStreak(0);
+        setTotalXP(0);
+        setIsLoading(false);
+      }
     }
-  }, [user, currentLanguage]); // Reload when language changes
+  }, [user, currentLanguage, authContext, languageContext]);
+
 
   const loadProgress = async () => {
     if (!user) return;

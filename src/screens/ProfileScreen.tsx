@@ -3,11 +3,13 @@ import {
   View, 
   Text, 
   StyleSheet, 
-  ScrollView,
+  ScrollView, 
   TouchableOpacity,
-  Alert
+  Alert 
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import { RootStackNavigationProp } from '@/types/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useProgress } from '@/hooks/useProgress';
@@ -19,156 +21,161 @@ import { getLanguageFlag } from '@/utils/helpers';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 export const ProfileScreen: React.FC = () => {
+  const navigation = useNavigation<RootStackNavigationProp>();
   const { user, signOut } = useAuth();
-  const { currentLanguage } = useLanguage();
-  const { completedScenarios, streak, totalXP } = useProgress();
+  const { currentLanguage, nativeLanguage } = useLanguage();
+  const { totalXP, streak, longestStreak, completedScenarios } = useProgress();
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
     Alert.alert(
       'Sign Out',
       'Are you sure you want to sign out?',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Sign Out', onPress: signOut, style: 'destructive' }
+        { 
+          text: 'Sign Out', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await signOut();
+            } catch (error) {
+              Alert.alert('Error', 'Failed to sign out');
+            }
+          }
+        }
       ]
     );
   };
 
-  const getLevelInfo = () => {
-    const level = Math.floor(totalXP / 1000) + 1;
-    const currentLevelXP = totalXP % 1000;
-    const nextLevelXP = 1000;
-    const progress = (currentLevelXP / nextLevelXP) * 100;
-    
-    return { level, currentLevelXP, nextLevelXP, progress };
+  const handleLanguageSettings = () => {
+    navigation.navigate('LanguageSelection');
   };
 
-  const { level, currentLevelXP, nextLevelXP, progress } = getLevelInfo();
-
   const achievements = [
-    { id: 1, icon: '🍕', title: 'Restaurant Regular', description: 'Completed 5 food ordering scenarios' },
-    { id: 2, icon: '🗣️', title: 'Conversation Starter', description: 'Had your first practice conversation' },
-    { id: 3, icon: '🔥', title: 'Week Warrior', description: 'Maintained a 7-day streak' },
-    { id: 4, icon: '🌍', title: 'Culture Explorer', description: 'Learned about 10 cultural differences' },
+    { icon: '🎯', title: 'First Steps', description: 'Completed your first lesson' },
+    { icon: '🔥', title: 'On Fire', description: 'Maintained a 7-day streak' },
+    { icon: '📚', title: 'Scholar', description: 'Completed 10 scenarios' },
   ];
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-        <ScrollView style={styles.container}>
+      <ScrollView style={styles.scrollView}>
         <View style={styles.header}>
-            <Text style={styles.title}>Your Progress</Text>
+          <Text style={styles.title}>Your Profile</Text>
         </View>
 
         <Card style={styles.userCard}>
-            <View style={styles.userInfo}>
+          <View style={styles.userInfo}>
             <View style={styles.avatar}>
-                <Text style={styles.avatarText}>
-                {user?.name.charAt(0).toUpperCase() || 'U'}
-                </Text>
+              <Text style={styles.avatarText}>
+                {user?.name?.charAt(0).toUpperCase() || 'U'}
+              </Text>
             </View>
             <View style={styles.userDetails}>
-                <Text style={styles.userName}>{user?.name || 'User'}</Text>
-                <Text style={styles.userEmail}>{user?.email}</Text>
+              <Text style={styles.userName}>{user?.name}</Text>
+              <Text style={styles.userEmail}>{user?.email}</Text>
             </View>
-            </View>
+          </View>
         </Card>
 
         <Card style={styles.levelCard}>
-            <View style={styles.levelHeader}>
-            <Text style={styles.levelTitle}>Current Level</Text>
-            <Text style={styles.levelNumber}>Level {level}</Text>
-            </View>
-            <View style={styles.progressBarContainer}>
-            <View style={[styles.progressBar, { width: `${progress}%` }]} />
-            </View>
-            <Text style={styles.xpText}>
-            {currentLevelXP} / {nextLevelXP} XP to next level
+          <View style={styles.levelHeader}>
+            <Text style={styles.levelTitle}>
+              {getLanguageFlag(currentLanguage)} {currentLanguage?.charAt(0).toUpperCase() + currentLanguage?.slice(1)}
             </Text>
+            <Text style={styles.levelNumber}>Level {Math.floor(totalXP / 100) + 1}</Text>
+          </View>
+          <View style={styles.progressBarContainer}>
+            <View style={[styles.progressBar, { width: `${(totalXP % 100)}%` }]} />
+          </View>
+          <Text style={styles.xpText}>{totalXP % 100}/100 XP to next level</Text>
         </Card>
 
         <View style={styles.statsGrid}>
-            <Card style={styles.statCard}>
+          <Card style={styles.statCard}>
             <Icon name="trophy" size={32} color={Colors.warning} />
-            <Text style={styles.statNumber}>{completedScenarios.length}</Text>
-            <Text style={styles.statLabel}>Scenarios Mastered</Text>
-            </Card>
-            
-            <Card style={styles.statCard}>
-            <Icon name="book-open-variant" size={32} color={Colors.primary} />
             <Text style={styles.statNumber}>{totalXP}</Text>
             <Text style={styles.statLabel}>Total XP</Text>
-            </Card>
+          </Card>
+          <Card style={styles.statCard}>
+            <Icon name="fire" size={32} color={Colors.danger} />
+            <Text style={styles.statNumber}>{streak}</Text>
+            <Text style={styles.statLabel}>Current Streak</Text>
+          </Card>
+          <Card style={styles.statCard}>
+            <Icon name="check-circle" size={32} color={Colors.success} />
+            <Text style={styles.statNumber}>{completedScenarios.length}</Text>
+            <Text style={styles.statLabel}>Completed</Text>
+          </Card>
         </View>
 
         <Card>
-            <Text style={styles.sectionTitle}>Learning Languages</Text>
-            <View style={styles.languagesList}>
-            {user?.learningLanguages.map((lang) => (
-                <View key={lang} style={styles.languageItem}>
-                <Text style={styles.languageFlag}>{getLanguageFlag(lang)}</Text>
-                <View style={styles.languageInfo}>
-                    <Text style={styles.languageName}>{lang}</Text>
-                    <Text style={styles.languageLevel}>
-                    {user.currentLevel[lang]?.level || 'Beginner'} • 
-                    {user.currentLevel[lang]?.xp || 0} XP
-                    </Text>
-                </View>
-                </View>
-            ))}
+          <Text style={styles.sectionTitle}>Languages</Text>
+          <View style={styles.languagesList}>
+            <View style={styles.languageItem}>
+              <Text style={styles.languageFlag}>{getLanguageFlag(nativeLanguage)}</Text>
+              <View style={styles.languageInfo}>
+                <Text style={styles.languageName}>{nativeLanguage}</Text>
+                <Text style={styles.languageLevel}>Native</Text>
+              </View>
             </View>
-            <Button
-            title="Add Language"
-            variant="outline"
-            size="small"
-            onPress={() => Alert.alert('Coming Soon', 'Language selection coming soon!')}
-            />
+            <View style={styles.languageItem}>
+              <Text style={styles.languageFlag}>{getLanguageFlag(currentLanguage)}</Text>
+              <View style={styles.languageInfo}>
+                <Text style={styles.languageName}>{currentLanguage}</Text>
+                <Text style={styles.languageLevel}>
+                  Level {Math.floor(totalXP / 100) + 1}
+                </Text>
+              </View>
+            </View>
+          </View>
         </Card>
 
         <Card>
-            <Text style={styles.sectionTitle}>Recent Achievements</Text>
-            <View style={styles.achievementsList}>
-            {achievements.slice(0, 3).map((achievement) => (
-                <View key={achievement.id} style={styles.achievementItem}>
+          <Text style={styles.sectionTitle}>Achievements</Text>
+          <View style={styles.achievementsList}>
+            {achievements.map((achievement, index) => (
+              <View key={index} style={styles.achievementItem}>
                 <Text style={styles.achievementIcon}>{achievement.icon}</Text>
                 <View style={styles.achievementInfo}>
-                    <Text style={styles.achievementTitle}>{achievement.title}</Text>
-                    <Text style={styles.achievementDescription}>
+                  <Text style={styles.achievementTitle}>{achievement.title}</Text>
+                  <Text style={styles.achievementDescription}>
                     {achievement.description}
-                    </Text>
+                  </Text>
                 </View>
-                </View>
+              </View>
             ))}
-            </View>
+          </View>
         </Card>
 
         <Card>
-            <Text style={styles.sectionTitle}>Settings</Text>
-            <TouchableOpacity style={styles.settingItem}>
-            <Icon name="bell-outline" size={24} color={Colors.text} />
-            <Text style={styles.settingText}>Notification Settings</Text>
-            <Icon name="chevron-right" size={24} color={Colors.textSecondary} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.settingItem}>
-            <Icon name="earth" size={24} color={Colors.text} />
+          <Text style={styles.sectionTitle}>Settings</Text>
+          <TouchableOpacity style={styles.settingItem} onPress={handleLanguageSettings}>
+            <Icon name="translate" size={24} color={Colors.primary} />
             <Text style={styles.settingText}>Language Preferences</Text>
             <Icon name="chevron-right" size={24} color={Colors.textSecondary} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.settingItem}>
-            <Icon name="help-circle-outline" size={24} color={Colors.text} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.settingItem}>
+            <Icon name="bell" size={24} color={Colors.primary} />
+            <Text style={styles.settingText}>Notifications</Text>
+            <Icon name="chevron-right" size={24} color={Colors.textSecondary} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.settingItem}>
+            <Icon name="help-circle" size={24} color={Colors.primary} />
             <Text style={styles.settingText}>Help & Support</Text>
             <Icon name="chevron-right" size={24} color={Colors.textSecondary} />
-            </TouchableOpacity>
+          </TouchableOpacity>
         </Card>
 
         <View style={styles.footer}>
-            <Button
+          <Button
             title="Sign Out"
             variant="outline"
             onPress={handleSignOut}
             icon={<Icon name="logout" size={20} color={Colors.danger} />}
-            />
+          />
         </View>
-        </ScrollView>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -179,10 +186,11 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
   },
   scrollView: {
-    flex:1,
+    flex: 1,
   },
   header: {
     padding: Layout.spacing.lg,
+    paddingBottom: Layout.spacing.md,
   },
   title: {
     fontSize: 24,
@@ -233,6 +241,7 @@ const styles = StyleSheet.create({
   levelTitle: {
     fontSize: 16,
     color: Colors.background,
+    textTransform: 'capitalize',
   },
   levelNumber: {
     fontSize: 18,

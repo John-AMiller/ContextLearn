@@ -32,19 +32,7 @@ export const signUp = async (email: string, password: string, name: string): Pro
 
   if (error) throw error;
 
-  // Create profile
-  const { error: profileError } = await supabase
-    .from('profiles')
-    .insert({
-      id: data.user!.id,
-      email,
-      name,
-      native_language: 'english',
-      learning_languages: []
-    });
-
-  if (profileError) throw profileError;
-
+  // Profile is automatically created by trigger
   return {
     id: data.user!.id,
     email,
@@ -85,4 +73,4 @@ const transformProfile = (profile: Profile): User => {
     learningLanguages: profile.learning_languages || [],
     currentLevel: {} // Load from progress table
   };
-};
+}; 

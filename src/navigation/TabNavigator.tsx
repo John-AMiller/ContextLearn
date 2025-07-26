@@ -3,6 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { TabParamList } from '@/types/navigation';
 import { HomeScreen } from '@/screens/HomeScreen';
 import { ProfileScreen } from '@/screens/ProfileScreen';
+import ProgressScreen from '@/screens/ProgressScreen';
 import { Colors } from '@/constants/colors';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
@@ -55,63 +56,7 @@ const TabNavigator: React.FC = () => {
   );
 };
 
-// Progress Screen (simple placeholder for now)
-const ProgressScreen: React.FC = () => {
-  const { completedScenarios, totalXP, streak } = useProgress();
-  
-  return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Your Progress</Text>
-      </View>
 
-      <Card style={styles.overviewCard}>
-        <Text style={styles.sectionTitle}>Weekly Overview</Text>
-        <View style={styles.weekChart}>
-          {[...Array(7)].map((_, index) => {
-            const height = Math.random() * 100; // Replace with real data
-            return (
-              <View key={index} style={styles.dayColumn}>
-                <View 
-                  style={[
-                    styles.dayBar, 
-                    { height: `${height}%`, backgroundColor: Colors.primary }
-                  ]} 
-                />
-                <Text style={styles.dayLabel}>
-                  {['M', 'T', 'W', 'T', 'F', 'S', 'S'][index]}
-                </Text>
-              </View>
-            );
-          })}
-        </View>
-      </Card>
-
-      <Card>
-        <Text style={styles.sectionTitle}>Completed Scenarios</Text>
-        {completedScenarios.map((scenario) => (
-          <View key={scenario.id} style={styles.scenarioItem}>
-            <View style={styles.scenarioInfo}>
-              <Text style={styles.scenarioTitle}>{scenario.title}</Text>
-              <Text style={styles.scenarioDate}>{scenario.lastPracticed}</Text>
-            </View>
-            <View style={styles.masteryContainer}>
-              <Text style={styles.masteryText}>{scenario.mastery}%</Text>
-              <View style={styles.masteryBar}>
-                <View 
-                  style={[
-                    styles.masteryFill, 
-                    { width: `${scenario.mastery}%` }
-                  ]} 
-                />
-              </View>
-            </View>
-          </View>
-        ))}
-      </Card>
-    </ScrollView>
-  );
-};
 
 import { ScrollView, View, Text, StyleSheet } from 'react-native';
 import { Card } from '@/components/common/Card';
