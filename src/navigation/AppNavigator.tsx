@@ -10,6 +10,9 @@ import { LessonScreen } from '@/screens/LessonsScreen';
 import { PracticeScreen } from '@/screens/PracticeScreen';
 import { LanguageSelectionScreen } from '@/screens/LanguageSelectionScreen';
 import { UserSetupScreen } from '@/screens/UserSetupScreen';
+import { AccountManagementScreen } from '@/screens/AccountManagementScreen';
+import { LinearLessonsScreen } from '@/screens/LinearLessonsScreen';
+import { PhotoUploadScreen } from '@/screens/PhotoUploadScreen';
 import { ActivityIndicator, View } from 'react-native';
 import { Colors } from '@/constants/colors';
 
@@ -42,6 +45,9 @@ const AppNavigator: React.FC = () => {
           <Stack.Screen name="Lesson" component={LessonScreen} />
           <Stack.Screen name="Practice" component={PracticeScreen} />
           <Stack.Screen name="LanguageSelection" component={LanguageSelectionScreen} />
+          <Stack.Screen name="AccountManagement" component={AccountManagementScreen} />
+          <Stack.Screen name="LinearLessons" component={LinearLessonsScreen} />
+          <Stack.Screen name="PhotoUpload" component={PhotoUploadScreen} />
         </>
       )}
     </Stack.Navigator>

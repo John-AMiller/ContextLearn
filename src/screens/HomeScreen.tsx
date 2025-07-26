@@ -5,7 +5,8 @@ import {
   StyleSheet, 
   ScrollView, 
   TouchableOpacity,
-  Animated 
+  Animated,
+  Alert 
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -19,6 +20,7 @@ import { Input } from '@/components/common/Input';
 import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
 import { getGreeting, getLanguageFlag } from '@/utils/helpers';
+import { findScenarioMatch, getConfirmationMessage } from '@/services/scenarioMatching.service';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
 
@@ -32,21 +34,62 @@ export const HomeScreen: React.FC = () => {
 
   const secondaryMethods = [
     { 
+      icon: 'school-outline', 
+      label: 'Lessons', 
+      id: 'lessons',
+      description: 'Structured curriculum from basics to advanced',
+      onPress: () => navigation.navigate('LinearLessons')
+    },
+    { 
       icon: 'view-grid-outline', 
       label: 'Browse Categories', 
       id: 'categories',
+      description: 'Practice specific scenarios and situations',
       onPress: () => navigation.navigate('Categories')
     },
     { 
       icon: 'camera-outline', 
       label: 'Upload Photo', 
       id: 'photo',
-      onPress: () => console.log('Photo upload - coming soon!')
+      description: 'Learn from images with AI assistance',
+      onPress: () => navigation.navigate('PhotoUpload')
     }
   ];
 
   const handleContinueToCustomization = () => {
-    navigation.navigate('LessonCustomization', { inputText });
+    if (!inputText.trim()) return;
+
+    // Check if input matches any existing scenarios
+    const scenarioMatch = findScenarioMatch(inputText.trim());
+    
+    if (scenarioMatch.isMatch && scenarioMatch.matchedScenario) {
+      // Show confirmation dialog for matched scenario
+      const confirmationMessage = getConfirmationMessage(scenarioMatch.matchedScenario);
+      
+      Alert.alert(
+        'Found a Match!',
+        confirmationMessage,
+        [
+          {
+            text: 'Yes',
+            onPress: () => {
+              // Navigate to Categories screen (they'll find the matching scenario there)
+              navigation.navigate('Categories');
+            }
+          },
+          {
+            text: 'No',
+            onPress: () => {
+              // Create custom lesson with original input
+              navigation.navigate('LessonCustomization', { inputText });
+            }
+          }
+        ]
+      );
+    } else {
+      // No match found, go straight to custom lesson
+      navigation.navigate('LessonCustomization', { inputText });
+    }
   };
 
   return (
@@ -58,11 +101,23 @@ export const HomeScreen: React.FC = () => {
               {getGreeting()}, {user?.name || 'Learner'}!
             </Text>
             <Text style={styles.subtitle}>
-              Learning {getLanguageFlag(currentLanguage)} {}
+              Learning {getLanguageFlag(currentLanguage)} {currentLanguage?.charAt(0).toUpperCase() + currentLanguage?.slice(1)}
             </Text>
           </View>
           <LanguageSwitcher />
         </View>
+
+        {/* Streak Display */}
+        {streak > 0 && (
+          <Card style={styles.streakCard}>
+            <View style={styles.streakContent}>
+              <Icon name="fire" size={24} color="#ff6b35" />
+              <Text style={styles.streakText}>
+                {streak} day streak! Keep it up! 🔥
+              </Text>
+            </View>
+          </Card>
+        )}
 
         {/* Primary Input Section */}
         <Card style={styles.primaryCard}>
@@ -100,17 +155,22 @@ export const HomeScreen: React.FC = () => {
           )}
         </Card>
 
-        {/* Secondary Options */}
+        {/* Learning Options */}
         <Card>
-          <Text style={styles.sectionTitle}>Other Options</Text>
+          <Text style={styles.sectionTitle}>Learning Options</Text>
           {secondaryMethods.map(method => (
             <TouchableOpacity
               key={method.id}
               style={styles.methodButton}
               onPress={method.onPress}
             >
-              <Icon name={method.icon} size={24} color={Colors.primary} />
-              <Text style={styles.methodText}>{method.label}</Text>
+              <View style={styles.methodIcon}>
+                <Icon name={method.icon} size={24} color={Colors.primary} />
+              </View>
+              <View style={styles.methodContent}>
+                <Text style={styles.methodText}>{method.label}</Text>
+                <Text style={styles.methodDescription}>{method.description}</Text>
+              </View>
               <Icon name="chevron-right" size={24} color={Colors.textSecondary} />
             </TouchableOpacity>
           ))}
@@ -120,43 +180,36 @@ export const HomeScreen: React.FC = () => {
         {completedScenarios.length > 0 && (
           <Card>
             <Text style={styles.sectionTitle}>Ready for Review</Text>
-            {completedScenarios.slice(0, 3).map((scenario) => (
+            {completedScenarios.slice(0, 3).map((scenario, index) => (
               <View key={scenario.id} style={styles.reviewItem}>
                 <View style={styles.reviewInfo}>
                   <Text style={styles.reviewTitle}>{scenario.title}</Text>
-                  <Text style={styles.reviewSubtitle}>
-                    {scenario.lastPracticed} • {scenario.mastery}% mastery
+                  <Text style={styles.reviewMastery}>
+                    {scenario.mastery}% mastery • {scenario.lastPracticed}
                   </Text>
                 </View>
-                <Button
-                  title="Review"
-                  variant="outline"
-                  size="small"
-                  onPress={() => console.log('Review:', scenario.id)}
-                />
+                <TouchableOpacity
+                  style={styles.reviewButton}
+                  onPress={() => {
+                    // TODO: Navigate to review for this scenario
+                    console.log('Review scenario:', scenario.id);
+                  }}
+                >
+                  <Text style={styles.reviewButtonText}>Review</Text>
+                </TouchableOpacity>
               </View>
             ))}
+            
+            {completedScenarios.length > 3 && (
+              <TouchableOpacity style={styles.seeAllButton}>
+                <Text style={styles.seeAllText}>
+                  See all {completedScenarios.length} completed scenarios
+                </Text>
+                <Icon name="chevron-right" size={16} color={Colors.primary} />
+              </TouchableOpacity>
+            )}
           </Card>
         )}
-
-        {/* Streak Card */}
-        <Card style={styles.streakCard}>
-          <View style={styles.streakHeader}>
-            <Text style={styles.streakTitle}>Current Streak</Text>
-            <Text style={styles.streakCount}>🔥 {streak} days</Text>
-          </View>
-          <View style={styles.streakDays}>
-            {[...Array(7)].map((_, i) => (
-              <View 
-                key={i} 
-                style={[
-                  styles.streakDay, 
-                  i < streak ? styles.streakDayActive : styles.streakDayInactive
-                ]} 
-              />
-            ))}
-          </View>
-        </Card>
       </ScrollView>
     </SafeAreaView>
   );
@@ -186,54 +239,56 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.textSecondary,
     marginTop: Layout.spacing.xs,
-    textTransform: 'capitalize',
+  },
+  streakCard: {
+    backgroundColor: '#fff3e0',
+    borderLeftWidth: 4,
+    borderLeftColor: '#ff6b35',
+    marginBottom: Layout.spacing.md,
+  },
+  streakContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Layout.spacing.sm,
+  },
+  streakText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#d84315',
   },
   primaryCard: {
-    marginBottom: Layout.spacing.lg,
-    backgroundColor: Colors.primary + '10', // Light primary color background
-    borderWidth: 1,
-    borderColor: Colors.primary + '30',
+    marginBottom: Layout.spacing.md,
   },
   primaryTitle: {
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: 'bold',
     color: Colors.text,
     marginBottom: Layout.spacing.xs,
   },
   primarySubtitle: {
     fontSize: 14,
     color: Colors.textSecondary,
-    marginBottom: Layout.spacing.md,
+    marginBottom: Layout.spacing.lg,
   },
   inputContainer: {
     position: 'relative',
   },
   primaryInput: {
     minHeight: 80,
-    textAlignVertical: 'top',
-    fontSize: 16,
-    paddingRight: 60, // Space for the button
+    paddingRight: 50,
   },
   continueButtonContainer: {
     position: 'absolute',
-    right: Layout.spacing.sm,
-    bottom: Layout.spacing.sm,
+    right: 8,
+    bottom: 8,
   },
   continueButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: Colors.primary,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
   },
   characterCount: {
     fontSize: 12,
@@ -252,64 +307,67 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: Layout.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.divider,
+    borderBottomColor: Colors.border,
+  },
+  methodIcon: {
+    width: 40,
+    alignItems: 'center',
+  },
+  methodContent: {
+    flex: 1,
+    marginLeft: Layout.spacing.md,
   },
   methodText: {
-    flex: 1,
     fontSize: 16,
+    fontWeight: '600',
     color: Colors.text,
-    marginLeft: Layout.spacing.md,
+  },
+  methodDescription: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    marginTop: Layout.spacing.xs,
   },
   reviewItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: Layout.spacing.sm,
+    paddingVertical: Layout.spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
   },
   reviewInfo: {
     flex: 1,
   },
   reviewTitle: {
     fontSize: 16,
-    fontWeight: '500',
-    color: Colors.text,
-  },
-  reviewSubtitle: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    marginTop: 2,
-  },
-  streakCard: {
-    marginBottom: Layout.spacing.xl,
-  },
-  streakHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Layout.spacing.md,
-  },
-  streakTitle: {
-    fontSize: 18,
     fontWeight: '600',
     color: Colors.text,
   },
-  streakCount: {
-    fontSize: 20,
-    fontWeight: 'bold',
+  reviewMastery: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    marginTop: Layout.spacing.xs,
   },
-  streakDays: {
+  reviewButton: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: Layout.spacing.md,
+    paddingVertical: Layout.spacing.sm,
+    borderRadius: Layout.borderRadius.md,
+  },
+  reviewButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.background,
+  },
+  seeAllButton: {
     flexDirection: 'row',
-    gap: Layout.spacing.xs,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Layout.spacing.md,
+    marginTop: Layout.spacing.sm,
   },
-  streakDay: {
-    flex: 1,
-    height: 8,
-    borderRadius: Layout.borderRadius.sm,
-  },
-  streakDayActive: {
-    backgroundColor: Colors.success,
-  },
-  streakDayInactive: {
-    backgroundColor: Colors.divider,
+  seeAllText: {
+    fontSize: 14,
+    color: Colors.primary,
+    marginRight: Layout.spacing.xs,
   },
 });

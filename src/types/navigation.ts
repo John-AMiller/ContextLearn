@@ -6,12 +6,16 @@ import { Lesson } from './index';
 export type RootStackParamList = {
   Main: undefined;
   Auth: undefined;
-  UserSetup: undefined; // New screen for initial user setup
-  LanguageSelection: undefined; // Existing screen for app language preferences
-  LessonCustomization: { inputText: string }; // Renamed from TextInput, now receives inputText
+  UserSetup: undefined;
+  LanguageSelection: undefined;
+  LessonCustomization: { inputText: string };
   Categories: undefined;
   Lesson: { lesson: Lesson };
   Practice: { lesson: Lesson };
+  AccountManagement: undefined;
+  LinearLessons: undefined;
+  LinearLesson: { lessonId: string }; // For taking individual linear lessons
+  PhotoUpload: undefined; // New route for photo upload with AI
 };
 
 export type TabParamList = {

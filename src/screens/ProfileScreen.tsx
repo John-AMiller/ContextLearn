@@ -51,6 +51,10 @@ export const ProfileScreen: React.FC = () => {
     navigation.navigate('LanguageSelection');
   };
 
+  const handleAccountManagement = () => {
+    navigation.navigate('AccountManagement');
+  };
+
   const achievements = [
     { icon: '🎯', title: 'First Steps', description: 'Completed your first lesson' },
     { icon: '🔥', title: 'On Fire', description: 'Maintained a 7-day streak' },
@@ -65,17 +69,20 @@ export const ProfileScreen: React.FC = () => {
         </View>
 
         <Card style={styles.userCard}>
-          <View style={styles.userInfo}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {user?.name?.charAt(0).toUpperCase() || 'U'}
-              </Text>
+          <TouchableOpacity style={styles.userInfo} onPress={handleAccountManagement}>
+            <View style={styles.userSection}>
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>
+                  {user?.name?.charAt(0).toUpperCase() || 'U'}
+                </Text>
+              </View>
+              <View style={styles.userDetails}>
+                <Text style={styles.userName}>{user?.name}</Text>
+                <Text style={styles.userEmail}>{user?.email}</Text>
+              </View>
             </View>
-            <View style={styles.userDetails}>
-              <Text style={styles.userName}>{user?.name}</Text>
-              <Text style={styles.userEmail}>{user?.email}</Text>
-            </View>
-          </View>
+            <Icon name="chevron-right" size={20} color={Colors.textSecondary} />
+          </TouchableOpacity>
         </Card>
 
         <Card style={styles.levelCard}>
@@ -93,77 +100,38 @@ export const ProfileScreen: React.FC = () => {
 
         <View style={styles.statsGrid}>
           <Card style={styles.statCard}>
-            <Icon name="trophy" size={32} color={Colors.warning} />
-            <Text style={styles.statNumber}>{totalXP}</Text>
-            <Text style={styles.statLabel}>Total XP</Text>
-          </Card>
-          <Card style={styles.statCard}>
-            <Icon name="fire" size={32} color={Colors.danger} />
             <Text style={styles.statNumber}>{streak}</Text>
-            <Text style={styles.statLabel}>Current Streak</Text>
+            <Text style={styles.statLabel}>Day Streak</Text>
           </Card>
           <Card style={styles.statCard}>
-            <Icon name="check-circle" size={32} color={Colors.success} />
+            <Text style={styles.statNumber}>{longestStreak}</Text>
+            <Text style={styles.statLabel}>Best Streak</Text>
+          </Card>
+          <Card style={styles.statCard}>
             <Text style={styles.statNumber}>{completedScenarios.length}</Text>
             <Text style={styles.statLabel}>Completed</Text>
           </Card>
         </View>
 
         <Card>
-          <Text style={styles.sectionTitle}>Languages</Text>
-          <View style={styles.languagesList}>
-            <View style={styles.languageItem}>
-              <Text style={styles.languageFlag}>{getLanguageFlag(nativeLanguage)}</Text>
-              <View style={styles.languageInfo}>
-                <Text style={styles.languageName}>{nativeLanguage}</Text>
-                <Text style={styles.languageLevel}>Native</Text>
-              </View>
-            </View>
-            <View style={styles.languageItem}>
-              <Text style={styles.languageFlag}>{getLanguageFlag(currentLanguage)}</Text>
-              <View style={styles.languageInfo}>
-                <Text style={styles.languageName}>{currentLanguage}</Text>
-                <Text style={styles.languageLevel}>
-                  Level {Math.floor(totalXP / 100) + 1}
-                </Text>
-              </View>
-            </View>
-          </View>
-        </Card>
-
-        <Card>
           <Text style={styles.sectionTitle}>Achievements</Text>
-          <View style={styles.achievementsList}>
-            {achievements.map((achievement, index) => (
-              <View key={index} style={styles.achievementItem}>
-                <Text style={styles.achievementIcon}>{achievement.icon}</Text>
-                <View style={styles.achievementInfo}>
-                  <Text style={styles.achievementTitle}>{achievement.title}</Text>
-                  <Text style={styles.achievementDescription}>
-                    {achievement.description}
-                  </Text>
-                </View>
+          {achievements.map((achievement, index) => (
+            <View key={index} style={styles.achievementItem}>
+              <Text style={styles.achievementIcon}>{achievement.icon}</Text>
+              <View style={styles.achievementText}>
+                <Text style={styles.achievementTitle}>{achievement.title}</Text>
+                <Text style={styles.achievementDescription}>{achievement.description}</Text>
               </View>
-            ))}
-          </View>
+            </View>
+          ))}
         </Card>
 
         <Card>
           <Text style={styles.sectionTitle}>Settings</Text>
           <TouchableOpacity style={styles.settingItem} onPress={handleLanguageSettings}>
-            <Icon name="translate" size={24} color={Colors.primary} />
-            <Text style={styles.settingText}>Language Preferences</Text>
-            <Icon name="chevron-right" size={24} color={Colors.textSecondary} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.settingItem}>
-            <Icon name="bell" size={24} color={Colors.primary} />
-            <Text style={styles.settingText}>Notifications</Text>
-            <Icon name="chevron-right" size={24} color={Colors.textSecondary} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.settingItem}>
-            <Icon name="help-circle" size={24} color={Colors.primary} />
-            <Text style={styles.settingText}>Help & Support</Text>
-            <Icon name="chevron-right" size={24} color={Colors.textSecondary} />
+            <Icon name="translate" size={20} color={Colors.primary} />
+            <Text style={styles.settingText}>App Language</Text>
+            <Icon name="chevron-right" size={20} color={Colors.textSecondary} />
           </TouchableOpacity>
         </Card>
 
@@ -203,6 +171,12 @@ const styles = StyleSheet.create({
   userInfo: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  userSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
   avatar: {
     width: 60,
@@ -219,6 +193,7 @@ const styles = StyleSheet.create({
   },
   userDetails: {
     marginLeft: Layout.spacing.md,
+    flex: 1,
   },
   userName: {
     fontSize: 18,
@@ -265,24 +240,23 @@ const styles = StyleSheet.create({
   },
   statsGrid: {
     flexDirection: 'row',
-    gap: Layout.spacing.md,
+    gap: Layout.spacing.sm,
     marginBottom: Layout.spacing.md,
   },
   statCard: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: Layout.spacing.lg,
+    padding: Layout.spacing.md,
   },
   statNumber: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: Colors.text,
-    marginVertical: Layout.spacing.sm,
+    color: Colors.primary,
   },
   statLabel: {
-    fontSize: 14,
+    fontSize: 12,
     color: Colors.textSecondary,
-    textAlign: 'center',
+    marginTop: Layout.spacing.xs,
   },
   sectionTitle: {
     fontSize: 18,
@@ -290,51 +264,21 @@ const styles = StyleSheet.create({
     color: Colors.text,
     marginBottom: Layout.spacing.md,
   },
-  languagesList: {
-    marginBottom: Layout.spacing.md,
-  },
-  languageItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: Layout.spacing.sm,
-  },
-  languageFlag: {
-    fontSize: 32,
-    marginRight: Layout.spacing.md,
-  },
-  languageInfo: {
-    flex: 1,
-  },
-  languageName: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: Colors.text,
-    textTransform: 'capitalize',
-  },
-  languageLevel: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-  },
-  achievementsList: {
-    gap: Layout.spacing.md,
-  },
   achievementItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
-    padding: Layout.spacing.md,
-    borderRadius: Layout.borderRadius.md,
+    marginBottom: Layout.spacing.md,
   },
   achievementIcon: {
-    fontSize: 32,
+    fontSize: 24,
     marginRight: Layout.spacing.md,
   },
-  achievementInfo: {
+  achievementText: {
     flex: 1,
   },
   achievementTitle: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
     color: Colors.text,
   },
   achievementDescription: {
@@ -344,15 +288,13 @@ const styles = StyleSheet.create({
   settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: Layout.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.divider,
+    paddingVertical: Layout.spacing.sm,
   },
   settingText: {
-    flex: 1,
     fontSize: 16,
     color: Colors.text,
     marginLeft: Layout.spacing.md,
+    flex: 1,
   },
   footer: {
     padding: Layout.spacing.lg,

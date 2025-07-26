@@ -4,7 +4,8 @@ import {
   Text, 
   StyleSheet, 
   ScrollView, 
-  TouchableOpacity 
+  TouchableOpacity,
+  Alert 
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -21,17 +22,23 @@ export const CategoriesScreen: React.FC = () => {
   const { currentLanguage } = useLanguage();
 
   const handleScenarioPress = (scenarioTitle: string) => {
-    // Find a matching lesson or generate one
+    // Find a matching lesson for this scenario
     const lessons = SAMPLE_LESSONS[currentLanguage] || [];
     const matchingLesson = lessons.find(lesson => 
-      lesson.title.toLowerCase().includes(scenarioTitle.toLowerCase())
+      lesson.title.toLowerCase().includes(scenarioTitle.toLowerCase()) ||
+      lesson.scenario.toLowerCase().includes(scenarioTitle.toLowerCase())
     );
 
     if (matchingLesson) {
+      // Navigate directly to lesson (no customization for categories)
       navigation.navigate('Lesson', { lesson: matchingLesson });
     } else {
-      // Navigate to text input with pre-filled scenario
-      navigation.navigate('TextInput');
+      // Show alert if no lesson found for this scenario
+      Alert.alert(
+        'Coming Soon', 
+        `The "${scenarioTitle}" lesson is not available yet. We're working on adding more content!`,
+        [{ text: 'OK', style: 'default' }]
+      );
     }
   };
 
