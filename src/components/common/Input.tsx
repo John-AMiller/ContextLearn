@@ -1,3 +1,4 @@
+// src/components/common/Input.tsx - Updated for dark theme compatibility
 import React from 'react';
 import { 
   TextInput, 
@@ -20,6 +21,7 @@ export const Input: React.FC<InputProps> = ({
   error,
   icon,
   style,
+  placeholderTextColor,
   ...props
 }) => {
   return (
@@ -29,7 +31,7 @@ export const Input: React.FC<InputProps> = ({
         {icon && <View style={styles.icon}>{icon}</View>}
         <TextInput
           style={[styles.input, style]}
-          placeholderTextColor={Colors.textSecondary}
+          placeholderTextColor={placeholderTextColor || Colors.textSecondary}
           {...props}
         />
       </View>

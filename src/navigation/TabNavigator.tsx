@@ -1,3 +1,4 @@
+// src/navigation/TabNavigator.tsx - Updated for Style 2B Card Game Adventure
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { TabParamList } from '@/types/navigation';
@@ -14,10 +15,20 @@ const TabNavigator: React.FC = () => {
     <Tab.Navigator
       screenOptions={{
         tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.textSecondary,
+        tabBarInactiveTintColor: Colors.textDisabled,
         tabBarStyle: {
-          borderTopWidth: 1,
-          borderTopColor: Colors.border,
+          backgroundColor: Colors.background,
+          borderTopWidth: 2,
+          borderTopColor: Colors.primary,
+          paddingTop: 8,
+          paddingBottom: 16,
+          height: 70,
+        },
+        tabBarLabelStyle: {
+          fontSize: 9,
+          fontWeight: 'bold',
+          textTransform: 'uppercase',
+          letterSpacing: 0.5,
         },
         headerShown: false,
       }}
@@ -26,9 +37,9 @@ const TabNavigator: React.FC = () => {
         name="Home"
         component={HomeScreen}
         options={{
-          tabBarLabel: 'Learn',
+          tabBarLabel: 'Adventure',
           tabBarIcon: ({ color, size }) => (
-            <Icon name="home" size={size} color={color} />
+            <Icon name="castle" size={size} color={color} />
           ),
         }}
       />
@@ -36,9 +47,9 @@ const TabNavigator: React.FC = () => {
         name="Progress"
         component={ProgressScreen}
         options={{
-          tabBarLabel: 'Progress',
+          tabBarLabel: 'Inventory',
           tabBarIcon: ({ color, size }) => (
-            <Icon name="chart-line" size={size} color={color} />
+            <Icon name="treasure-chest" size={size} color={color} />
           ),
         }}
       />
@@ -46,103 +57,14 @@ const TabNavigator: React.FC = () => {
         name="Profile"
         component={ProfileScreen}
         options={{
-          tabBarLabel: 'Profile',
+          tabBarLabel: 'Guild',
           tabBarIcon: ({ color, size }) => (
-            <Icon name="account" size={size} color={color} />
+            <Icon name="shield-account" size={size} color={color} />
           ),
         }}
       />
     </Tab.Navigator>
   );
 };
-
-
-
-import { ScrollView, View, Text, StyleSheet } from 'react-native';
-import { Card } from '@/components/common/Card';
-import { Layout } from '@/constants/layout';
-import { useProgress } from '@/hooks/useProgress';
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.surface,
-  },
-  header: {
-    padding: Layout.spacing.lg,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: Colors.text,
-  },
-  overviewCard: {
-    marginBottom: Layout.spacing.md,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: Colors.text,
-    marginBottom: Layout.spacing.md,
-  },
-  weekChart: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    height: 150,
-  },
-  dayColumn: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  dayBar: {
-    width: '60%',
-    borderRadius: Layout.borderRadius.sm,
-  },
-  dayLabel: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-    marginTop: Layout.spacing.sm,
-  },
-  scenarioItem: {
-    paddingVertical: Layout.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.divider,
-  },
-  scenarioInfo: {
-    marginBottom: Layout.spacing.sm,
-  },
-  scenarioTitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: Colors.text,
-  },
-  scenarioDate: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-  },
-  masteryContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Layout.spacing.sm,
-  },
-  masteryText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.primary,
-    width: 40,
-  },
-  masteryBar: {
-    flex: 1,
-    height: 8,
-    backgroundColor: Colors.border,
-    borderRadius: 4,
-  },
-  masteryFill: {
-    height: '100%',
-    backgroundColor: Colors.success,
-    borderRadius: 4,
-  },
-});
 
 export default TabNavigator;
