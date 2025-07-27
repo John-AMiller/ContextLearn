@@ -320,13 +320,13 @@ export const PracticeScreen: React.FC = () => {
               title="Next Word"
               onPress={nextTeachingCard}
               disabled={!hasFlippedCard} // Enable once card has been flipped
-              style={[styles.teachingButton, !hasFlippedCard && styles.disabledButton]}
+              style={StyleSheet.flatten([styles.teachingButton, !hasFlippedCard && styles.disabledButton])}
             />
             {hasSeenAllCards && (
               <Button
                 title="Start Practice"
                 onPress={skipToTesting}
-                style={[styles.teachingButton, styles.primaryButton]}
+                style={StyleSheet.flatten([styles.teachingButton, styles.primaryButton])}
               />
             )}
           </View>
@@ -368,7 +368,7 @@ export const PracticeScreen: React.FC = () => {
               title="Continue"
               onPress={nextTeachingCard}
               disabled={!showTranslation}
-              style={[styles.teachingButton, !showTranslation && styles.disabledButton]}
+              style={StyleSheet.flatten([styles.teachingButton, !showTranslation && styles.disabledButton])}
             />
           </View>
         </Card>
@@ -430,7 +430,7 @@ export const PracticeScreen: React.FC = () => {
         )}
 
         {showFeedback && (
-          <Card style={[styles.feedbackCard, isCorrect ? styles.correctCard : styles.incorrectCard]}>
+          <Card style={StyleSheet.flatten([styles.feedbackCard, isCorrect ? styles.correctCard : styles.incorrectCard])}>
             <View style={styles.feedbackHeader}>
               <Icon 
                 name={isCorrect ? "check-circle" : "close-circle"} 
@@ -819,3 +819,4 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.success,
   },
 });
+

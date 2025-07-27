@@ -20,7 +20,8 @@ export type RootStackParamList = {
 
 export type TabParamList = {
   Home: undefined;
-  Progress: undefined;
+  Journey: undefined;
+  Guild: undefined;
   Profile: undefined;
 };
 

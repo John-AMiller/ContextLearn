@@ -324,7 +324,7 @@ export const PhotoUploadScreen: React.FC = () => {
               onPress={analyzeImage}
               loading={isAnalyzing}
               style={styles.analyzeButton}
-              icon={<Icon name="robot" size={20} color={Colors.background} />}
+              icon="robot"
             />
           )}
 
@@ -498,7 +498,7 @@ export const PhotoUploadScreen: React.FC = () => {
               onPress={generateLesson}
               loading={isGeneratingLesson}
               style={styles.generateButton}
-              icon={<Icon name="magic-staff" size={20} color={Colors.background} />}
+              icon="magic-staff"
             />
           )}
 

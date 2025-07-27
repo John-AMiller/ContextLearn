@@ -1,10 +1,10 @@
-// src/navigation/TabNavigator.tsx - Updated for Style 2B Card Game Adventure
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { TabParamList } from '@/types/navigation';
 import { HomeScreen } from '@/screens/HomeScreen';
 import { ProfileScreen } from '@/screens/ProfileScreen';
-import ProgressScreen from '@/screens/ProgressScreen';
+import { GuildScreen } from '@/screens/GuildScreen';
+import { JourneyScreen } from '@/screens/JourneyScreen';
 import { Colors } from '@/constants/colors';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
@@ -14,21 +14,22 @@ const TabNavigator: React.FC = () => {
   return (
     <Tab.Navigator
       screenOptions={{
-        tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.textDisabled,
+        tabBarActiveTintColor: Colors.navigation.active,
+        tabBarInactiveTintColor: Colors.navigation.inactive,
         tabBarStyle: {
           backgroundColor: Colors.background,
           borderTopWidth: 2,
-          borderTopColor: Colors.primary,
+          borderTopColor: Colors.navigation.border,
+          paddingBottom: 8,
           paddingTop: 8,
-          paddingBottom: 16,
           height: 70,
         },
         tabBarLabelStyle: {
-          fontSize: 9,
-          fontWeight: 'bold',
+          fontSize: 8,
+          fontWeight: '600',
           textTransform: 'uppercase',
-          letterSpacing: 0.5,
+          letterSpacing: 0.3,
+          marginTop: 3,
         },
         headerShown: false,
       }}
@@ -37,19 +38,29 @@ const TabNavigator: React.FC = () => {
         name="Home"
         component={HomeScreen}
         options={{
-          tabBarLabel: 'Adventure',
+          tabBarLabel: 'Learn',
           tabBarIcon: ({ color, size }) => (
-            <Icon name="castle" size={size} color={color} />
+            <Icon name="home" size={size} color={color} />
           ),
         }}
       />
       <Tab.Screen
-        name="Progress"
-        component={ProgressScreen}
+        name="Journey"
+        component={JourneyScreen}
         options={{
-          tabBarLabel: 'Inventory',
+          tabBarLabel: 'Journey',
           tabBarIcon: ({ color, size }) => (
-            <Icon name="treasure-chest" size={size} color={color} />
+            <Icon name="map" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Guild"
+        component={GuildScreen}
+        options={{
+          tabBarLabel: 'Guild',
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="castle" size={size} color={color} />
           ),
         }}
       />
@@ -57,9 +68,9 @@ const TabNavigator: React.FC = () => {
         name="Profile"
         component={ProfileScreen}
         options={{
-          tabBarLabel: 'Guild',
+          tabBarLabel: 'Profile',
           tabBarIcon: ({ color, size }) => (
-            <Icon name="shield-account" size={size} color={color} />
+            <Icon name="account" size={size} color={color} />
           ),
         }}
       />

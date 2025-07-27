@@ -244,7 +244,7 @@ export const LessonCustomizationScreen: React.FC = () => {
               onPress={handleGenerateLesson}
               disabled={!lessonType || !location}
               loading={isLoading}
-              icon={<Icon name="auto-fix" size={20} color={Colors.background} />}
+              icon="auto-fix"
             />
           </View>
         </ScrollView>

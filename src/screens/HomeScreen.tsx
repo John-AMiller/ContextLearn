@@ -1,4 +1,5 @@
-// src/screens/HomeScreen.tsx - Updated for Style 2B Card Game Adventure
+// src/screens/HomeScreen.tsx - Scholarly Academy Style (COMPLETE REPLACEMENT)
+
 import React, { useState } from 'react';
 import { 
   View, 
@@ -6,8 +7,8 @@ import {
   StyleSheet, 
   ScrollView, 
   TouchableOpacity,
-  Alert,
-  StatusBar
+  TextInput,
+  Alert 
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -17,7 +18,6 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { useProgress } from '@/hooks/useProgress';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
-import { Input } from '@/components/common/Input';
 import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
 import { getGreeting, getLanguageFlag } from '@/utils/helpers';
@@ -30,42 +30,36 @@ export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const { user } = useAuth();
   const { currentLanguage } = useLanguage();
-  const { completedScenarios, streak, totalXP } = useProgress();
+  const { completedScenarios, streak } = useProgress();
   
   const [inputText, setInputText] = useState('');
 
-  // Mock data for gaming elements
-  const gems = Math.floor(totalXP / 10) + 247; // Convert XP to gems
-  const energy = 85; // Mock energy percentage
-
-  const gameCards = [
+  // Scholar's learning tomes - using mystical language
+  const ancientTomes = [
     { 
-      icon: '🏰', 
-      title: 'Castle Academy', 
-      description: 'Structured learning path',
-      reward: '+50 XP',
-      colors: ['#ed64a6', '#f687b3'],
+      icon: '📚', 
+      title: 'Ancient Tomes', 
+      description: 'Study structured language paths',
+      badge: 'Scholar',
       onPress: () => navigation.navigate('LinearLessons')
     },
     { 
-      icon: '⚔️', 
-      title: 'Battle Arena', 
-      description: 'Quick conversation duels',
-      reward: '+25 XP',
-      colors: ['#38b2ac', '#4fd1c7'],
+      icon: '🗣️', 
+      title: 'Discourse Practice', 
+      description: 'Converse in real scenarios',
+      badge: 'Practical',
       onPress: () => navigation.navigate('Categories')
     },
     { 
-      icon: '🗺️', 
-      title: 'Explorer Mode', 
-      description: 'Discover through images',
-      reward: '+35 XP',
-      colors: ['#ed8936', '#fbb033'],
+      icon: '🖼️', 
+      title: 'Illuminated Texts', 
+      description: 'Learn from visual manuscripts',
+      badge: 'Visual',
       onPress: () => navigation.navigate('PhotoUpload')
     }
   ];
 
-  const handleContinueToCustomization = () => {
+  const handleBeginQuest = () => {
     if (!inputText.trim()) return;
 
     // Check if input matches any existing scenarios
@@ -76,109 +70,170 @@ export const HomeScreen: React.FC = () => {
       const confirmationMessage = getConfirmationMessage(scenarioMatch.matchedScenario);
       
       Alert.alert(
-        'Found a Match!',
+        'Ancient Knowledge Found!',
         confirmationMessage,
         [
-          {
-            text: 'Yes',
-            onPress: () => {
-              navigation.navigate('Categories');
-            }
-          },
-          {
-            text: 'No',
-            onPress: () => {
-              navigation.navigate('LessonCustomization', { inputText });
-            }
+          { text: 'Seek Different Wisdom', style: 'cancel' },
+          { 
+            text: 'Begin This Quest', 
+            onPress: () => navigation.navigate('LessonCustomization', { inputText: scenarioMatch.matchedScenario! })
           }
         ]
       );
     } else {
-      navigation.navigate('LessonCustomization', { inputText });
+      // Navigate to lesson customization
+      navigation.navigate('LessonCustomization', { inputText: inputText.trim() });
     }
+  };
+
+  // Calculate scholar's wisdom stats
+  const getWisdomPoints = () => {
+    return completedScenarios.reduce((total, scenario) => total + scenario.mastery, 0);
+  };
+
+  const getQuestCount = () => {
+    return completedScenarios.length;
+  };
+
+  const getScholarRank = () => {
+    const wisdom = getWisdomPoints();
+    if (wisdom < 100) return 'Novice';
+    if (wisdom < 500) return 'Student';
+    if (wisdom < 1000) return 'Scholar';
+    if (wisdom < 2000) return 'Sage';
+    return 'Master';
   };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar barStyle="light-content" backgroundColor={Colors.background} />
-      
-      {/* Header with Gaming UI */}
-      <LinearGradient
-        colors={['#38b2ac', '#319795']}
-        style={styles.header}
-      >
-        <View style={styles.gemsCounter}>
-          <Text style={styles.gemsText}>💎 {gems.toLocaleString()}</Text>
-        </View>
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         
-        <Text style={styles.greeting}>Adventure Awaits! ⚔️</Text>
-        <Text style={styles.subtitle}>Choose your learning quest</Text>
-        
-        {/* Energy Bar */}
-        <View style={styles.energyContainer}>
-          <View style={styles.energyBar}>
-            <LinearGradient
-              colors={['#68d391', '#48bb78']}
-              style={[styles.energyFill, { width: `${energy}%` }]}
-            />
-          </View>
+        {/* Scholarly Header */}
+        <View style={styles.header}>
+          <LinearGradient
+            colors={Colors.gradients.primary as [string, string, ...string[]]}
+            start={{x: 0, y: 0}}
+            end={{x: 1, y: 1}}
+            style={styles.headerGradient}
+          >
+            {/* Mystical pattern overlay */}
+            <View style={styles.headerOverlay} />
+            
+            <View style={styles.headerContent}>
+              <View style={styles.languageSwitcherContainer}>
+                <LanguageSwitcher />
+              </View>
+              
+              <View style={styles.scholarBadge}>
+                <Text style={styles.badgeText}>Scholar of Languages</Text>
+              </View>
+              
+              <Text style={styles.greeting}>Welcome, Learned One</Text>
+              <Text style={styles.subtitle}>Your linguistic journey continues</Text>
+              
+              <View style={styles.progressOrbs}>
+                <View style={styles.orb}>
+                  <Text style={styles.orbValue}>{getWisdomPoints()}</Text>
+                  <Text style={styles.orbLabel}>Wisdom</Text>
+                </View>
+                <View style={styles.orb}>
+                  <Text style={styles.orbValue}>{getQuestCount()}</Text>
+                  <Text style={styles.orbLabel}>Quest</Text>
+                </View>
+                <View style={styles.orb}>
+                  <Text style={styles.orbValue}>{getScholarRank()}</Text>
+                  <Text style={styles.orbLabel}>Rank</Text>
+                </View>
+              </View>
+            </View>
+          </LinearGradient>
         </View>
-      </LinearGradient>
 
-      {/* Content Area */}
-      <View style={styles.contentArea}>
-        {/* Custom Quest Creation */}
-        <View style={styles.deckArea}>
-          <Text style={styles.deckLabel}>🎴 Create Custom Quest</Text>
-          <Input
-            value={inputText}
-            onChangeText={setInputText}
-            placeholder="Describe your learning adventure..."
-            multiline
-            style={styles.questInput}
-            maxLength={300}
-          />
+        {/* Content Area */}
+        <View style={styles.contentArea}>
           
-          {inputText.trim().length > 0 && (
-            <TouchableOpacity 
-              style={styles.playButton}
-              onPress={handleContinueToCustomization}
-            >
-              <Text style={styles.playButtonText}>▶️</Text>
-            </TouchableOpacity>
+          {/* Scribe Your Learning Quest */}
+          <Card mystical style={styles.scrollArea}>
+            <View style={styles.scrollAreaOverlay} />
+            <View style={styles.scrollContent}>
+              <View style={styles.scrollLabelContainer}>
+                <Text style={styles.scrollLabel}>📜 Scribe Your Learning Quest</Text>
+              </View>
+              
+              <TextInput
+                style={styles.ancientInput}
+                placeholder="In what tongue would you seek mastery?"
+                placeholderTextColor="rgba(226, 232, 240, 0.5)"
+                value={inputText}
+                onChangeText={setInputText}
+                multiline
+                numberOfLines={3}
+              />
+              
+              <TouchableOpacity 
+                style={styles.beginBtn}
+                onPress={handleBeginQuest}
+                disabled={!inputText.trim()}
+              >
+                <Text style={styles.beginBtnText}>✦</Text>
+              </TouchableOpacity>
+            </View>
+          </Card>
+
+          {/* Ancient Tomes Grid */}
+          <View style={styles.tomesGrid}>
+            {ancientTomes.map((tome, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.tome}
+                onPress={tome.onPress}
+                activeOpacity={0.8}
+              >
+                <Card gradient interactive style={styles.tomeCard}>
+                  <View style={styles.tomeShimmer} />
+                  <View style={styles.tomeContent}>
+                    <View style={styles.tomeIcon}>
+                      <Text style={styles.tomeEmoji}>{tome.icon}</Text>
+                    </View>
+                    <View style={styles.tomeText}>
+                      <Text style={styles.tomeTitle}>{tome.title}</Text>
+                      <Text style={styles.tomeDescription}>{tome.description}</Text>
+                    </View>
+                    <View style={styles.masteryBadge}>
+                      <Text style={styles.masteryText}>{tome.badge}</Text>
+                    </View>
+                  </View>
+                </Card>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Scholar's Review Section */}
+          {completedScenarios.length > 0 && (
+            <Card style={styles.reviewCard}>
+              <Text style={styles.reviewTitle}>📖 Chronicles of Learning</Text>
+              <Text style={styles.reviewSubtitle}>Review thy completed quests</Text>
+              
+              {completedScenarios.slice(0, 2).map((scenario, index) => (
+                <View key={scenario.id} style={styles.reviewItem}>
+                  <View style={styles.reviewIcon}>
+                    <Icon name="scroll-text" size={20} color={Colors.primary} />
+                  </View>
+                  <View style={styles.reviewInfo}>
+                    <Text style={styles.reviewItemTitle}>{scenario.title}</Text>
+                    <Text style={styles.reviewMastery}>
+                      {scenario.mastery}% mastery • {scenario.lastPracticed}
+                    </Text>
+                  </View>
+                  <TouchableOpacity style={styles.reviewButton}>
+                    <Text style={styles.reviewButtonText}>Study</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </Card>
           )}
         </View>
-
-        {/* Game Cards */}
-        <ScrollView 
-          style={styles.cardsContainer}
-          showsVerticalScrollIndicator={false}
-        >
-          {gameCards.map((card, index) => (
-            <TouchableOpacity
-              key={index}
-              style={styles.gameCard}
-              onPress={card.onPress}
-            >
-              <LinearGradient
-                colors={card.colors as [string, string, ...string[]]}
-                style={styles.gameCardGradient}
-              >
-                <View style={styles.cardIcon}>
-                  <Text style={styles.cardIconText}>{card.icon}</Text>
-                </View>
-                <View style={styles.cardContent}>
-                  <Text style={styles.cardTitle}>{card.title}</Text>
-                  <Text style={styles.cardDescription}>{card.description}</Text>
-                </View>
-                <View style={styles.cardReward}>
-                  <Text style={styles.cardRewardText}>{card.reward}</Text>
-                </View>
-              </LinearGradient>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -188,149 +243,273 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
+  scrollView: {
+    flex: 1,
+  },
   header: {
-    padding: Layout.spacing.lg,
-    paddingBottom: Layout.spacing.md,
     position: 'relative',
     overflow: 'hidden',
   },
-  gemsCounter: {
-    position: 'absolute',
-    top: Layout.spacing.lg,
-    right: Layout.spacing.lg,
-    backgroundColor: Colors.accent,
-    paddingHorizontal: Layout.spacing.sm,
-    paddingVertical: Layout.spacing.xs,
-    borderRadius: Layout.borderRadius.lg,
+  headerGradient: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 12,
+    position: 'relative',
   },
-  gemsText: {
-    fontSize: 11,
+  headerOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'transparent',
+    opacity: 0.3,
+    // Mystical pattern would be added here
+  },
+  headerContent: {
+    position: 'relative',
+    zIndex: 1,
+  },
+  languageSwitcherContainer: {
+    alignSelf: 'flex-end',
+    marginBottom: 8,
+  },
+  scholarBadge: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 10,
+    alignSelf: 'flex-start',
+    marginBottom: 8,
+  },
+  badgeText: {
+    color: Colors.background,
+    fontSize: 9,
     fontWeight: 'bold',
-    color: '#744210',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
   },
   greeting: {
-    fontSize: 19,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: 'normal',
     color: Colors.text,
-    marginBottom: Layout.spacing.xs,
-    textShadowColor: 'rgba(0,0,0,0.2)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
+    marginBottom: 4,
+    fontFamily: 'System', // Cinzel-like
   },
   subtitle: {
-    fontSize: 13,
-    color: Colors.text,
+    fontSize: 12,
+    color: Colors.textSecondary,
     opacity: 0.9,
-    marginBottom: Layout.spacing.sm,
+    marginBottom: 8,
+    fontStyle: 'italic',
   },
-  energyContainer: {
-    marginTop: Layout.spacing.sm,
+  progressOrbs: {
+    flexDirection: 'row',
+    gap: 8,
   },
-  energyBar: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: Layout.borderRadius.sm,
-    height: 6,
-    overflow: 'hidden',
+  orb: {
+    backgroundColor: Colors.glass,
+    borderWidth: 2,
+    borderColor: 'rgba(214, 158, 46, 0.3)',
+    borderRadius: 19,
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
   },
-  energyFill: {
-    height: '100%',
-    borderRadius: Layout.borderRadius.sm,
+  orbValue: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: Colors.primary,
+  },
+  orbLabel: {
+    fontSize: 7,
+    color: Colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
   },
   contentArea: {
     flex: 1,
-    padding: Layout.spacing.lg,
-    paddingTop: Layout.spacing.md,
+    padding: 20,
   },
-  deckArea: {
-    backgroundColor: Colors.cardBackground,
-    borderRadius: Layout.borderRadius.lg,
-    padding: Layout.spacing.lg,
+  scrollArea: {
+    marginBottom: 14,
+    position: 'relative',
+  },
+  scrollAreaOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 12,
+    backgroundColor: 'transparent',
+    opacity: 0.3,
+    // Mystical gradient pattern
+  },
+  scrollContent: {
+    position: 'relative',
+    zIndex: 1,
+  },
+  scrollLabelContainer: {
+    marginBottom: 8,
+  },
+  scrollLabel: {
+    fontSize: 12,
+    color: Colors.primary,
+    fontWeight: '600',
+    fontFamily: 'System', // Cinzel-like
+  },
+  ancientInput: {
+    width: '100%',
+    backgroundColor: Colors.inputBackground,
     borderWidth: 2,
-    borderColor: Colors.cardBorder,
-    borderStyle: 'dashed',
-    marginBottom: Layout.spacing.lg,
-  },
-  deckLabel: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    marginBottom: Layout.spacing.sm,
-    fontWeight: 'bold',
-  },
-  questInput: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: Colors.inputBorder,
+    borderRadius: 10,
+    padding: 10,
+    fontSize: 13,
+    minHeight: 50,
     color: Colors.text,
-    minHeight: 60,
+    fontFamily: 'System', // Georgia-like
+    textAlignVertical: 'top',
   },
-  playButton: {
-    backgroundColor: Colors.primary,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  beginBtn: {
+    backgroundColor: Colors.secondary,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: 8,
     alignSelf: 'flex-end',
-    marginTop: Layout.spacing.sm,
   },
-  playButtonText: {
-    fontSize: 16,
+  beginBtnText: {
     color: Colors.text,
+    fontSize: 14,
+    fontWeight: 'bold',
   },
-  cardsContainer: {
-    flex: 1,
+  tomesGrid: {
+    gap: 8,
+    marginBottom: 20,
   },
-  gameCard: {
-    marginBottom: Layout.spacing.sm,
-    borderRadius: Layout.borderRadius.lg,
-    overflow: 'hidden',
+  tome: {
+    // Wrapper for each tome
   },
-  gameCardGradient: {
-    padding: Layout.spacing.md,
+  tomeCard: {
+    // Card styling handled by Card component
+  },
+  tomeShimmer: {
+    position: 'absolute',
+    top: '-50%',
+    left: '-50%',
+    width: '200%',
+    height: '200%',
+    backgroundColor: 'transparent',
+    // Shimmer effect would be added here
+  },
+  tomeContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.1)',
-    borderRadius: Layout.borderRadius.lg,
+    position: 'relative',
+    zIndex: 1,
   },
-  cardIcon: {
-    width: 44,
-    height: 44,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: Layout.borderRadius.lg,
+  tomeIcon: {
+    width: 40,
+    height: 40,
+    backgroundColor: Colors.secondary,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: Layout.spacing.md,
+    marginRight: 12,
     borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.3)',
+    borderColor: 'rgba(214, 158, 46, 0.3)',
   },
-  cardIconText: {
-    fontSize: 20,
+  tomeEmoji: {
+    fontSize: 16,
   },
-  cardContent: {
+  tomeText: {
     flex: 1,
   },
-  cardTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
+  tomeTitle: {
+    fontSize: 13,
+    fontWeight: '600',
     color: Colors.text,
     marginBottom: 2,
+    fontFamily: 'System', // Cinzel-like
   },
-  cardDescription: {
-    fontSize: 11,
-    color: Colors.text,
-    opacity: 0.9,
+  tomeDescription: {
+    fontSize: 10,
+    color: Colors.textTertiary,
+    lineHeight: 12,
   },
-  cardReward: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: Layout.spacing.sm,
-    paddingVertical: 2,
-    borderRadius: Layout.borderRadius.sm,
+  masteryBadge: {
+    backgroundColor: 'rgba(214, 158, 46, 0.2)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
+    borderColor: 'rgba(214, 158, 46, 0.3)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
   },
-  cardRewardText: {
+  masteryText: {
     fontSize: 8,
     fontWeight: 'bold',
+    color: Colors.primary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+  reviewCard: {
+    marginTop: 10,
+  },
+  reviewTitle: {
+    fontSize: 16,
+    fontWeight: '600',
     color: Colors.text,
+    marginBottom: 4,
+    fontFamily: 'System', // Cinzel-like
+  },
+  reviewSubtitle: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    marginBottom: 16,
+    fontStyle: 'italic',
+  },
+  reviewItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  reviewIcon: {
+    width: 32,
+    alignItems: 'center',
+  },
+  reviewInfo: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  reviewItemTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.text,
+  },
+  reviewMastery: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  reviewButton: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  reviewButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.background,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
   },
 });
