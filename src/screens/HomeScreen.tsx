@@ -46,14 +46,14 @@ export const HomeScreen: React.FC = () => {
     { 
       icon: '🗣️', 
       title: 'Discourse Practice', 
-      description: 'Converse in real scenarios',
+      description: 'Learn common scenarios',
       badge: 'Practical',
       onPress: () => navigation.navigate('Categories')
     },
     { 
       icon: '🖼️', 
       title: 'Illuminated Texts', 
-      description: 'Learn from visual manuscripts',
+      description: 'Upload photos to learn',
       badge: 'Visual',
       onPress: () => navigation.navigate('PhotoUpload')
     }
@@ -157,13 +157,13 @@ export const HomeScreen: React.FC = () => {
             <View style={styles.scrollAreaOverlay} />
             <View style={styles.scrollContent}>
               <View style={styles.scrollLabelContainer}>
-                <Text style={styles.scrollLabel}>📜 Scribe Your Learning Quest</Text>
+                <Text style={styles.scrollLabel}>📜 Ask the oracles what you wish to learn...</Text>
               </View>
               
               <TextInput
                 style={styles.ancientInput}
-                placeholder="In what tongue would you seek mastery?"
-                placeholderTextColor="rgba(226, 232, 240, 0.5)"
+                //placeholder="Ask the oracles what you wish to learn..."
+                //placeholderTextColor="rgba(226, 232, 240, 0.5)"
                 value={inputText}
                 onChangeText={setInputText}
                 multiline
@@ -212,7 +212,7 @@ export const HomeScreen: React.FC = () => {
           {completedScenarios.length > 0 && (
             <Card style={styles.reviewCard}>
               <Text style={styles.reviewTitle}>📖 Chronicles of Learning</Text>
-              <Text style={styles.reviewSubtitle}>Review thy completed quests</Text>
+              <Text style={styles.reviewSubtitle}>Review your completed quests</Text>
               
               {completedScenarios.slice(0, 2).map((scenario, index) => (
                 <View key={scenario.id} style={styles.reviewItem}>
