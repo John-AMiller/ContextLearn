@@ -1,3 +1,4 @@
+// src/screens/PhotoUploadScreen.tsx
 import React, { useState } from 'react';
 import { 
   View, 
@@ -7,7 +8,6 @@ import {
   TouchableOpacity,
   Image,
   Alert,
-  TextInput,
   KeyboardAvoidingView,
   Platform
 } from 'react-native';
@@ -36,15 +36,17 @@ export const PhotoUploadScreen: React.FC = () => {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [additionalContext, setAdditionalContext] = useState('');
   const [lessonType, setLessonType] = useState<'rapid' | 'full' | null>(null);
-  const [location, setLocation] = useState('general');
-  const [formality, setFormality] = useState<'casual' | 'neutral' | 'formal'>('neutral');
+  const [locationChosen, setLocationChosen] = useState(false);
+  const [location, setLocation] = useState(''); // Start with nothing selected
+  const [formality, setFormality] = useState<'casual' | 'neutral' | 'formal' | ''>(''); // Allow empty string
+  const [formalityChosen, setFormalityChosen] = useState(false);
   const [isGeneratingLesson, setIsGeneratingLesson] = useState(false);
 
   const locations = [
     { label: 'Mexico City, Mexico', value: 'mexico' },
     { label: 'Madrid, Spain', value: 'spain' },
     { label: 'Buenos Aires, Argentina', value: 'argentina' },
-    { label: 'Rome, Italy', value: 'italy' },
+    { label: 'Santiago, Chile', value: 'chile' },
     { label: 'General/Multiple regions', value: 'general' }
   ];
 
@@ -89,7 +91,7 @@ export const PhotoUploadScreen: React.FC = () => {
 
     if (!result.canceled) {
       setSelectedImage(result.assets[0].uri);
-      resetAnalysis(); // Reset all analysis-related state
+      resetAnalysis();
     }
   };
 
@@ -105,7 +107,7 @@ export const PhotoUploadScreen: React.FC = () => {
 
     if (!result.canceled) {
       setSelectedImage(result.assets[0].uri);
-      resetAnalysis(); // Reset all analysis-related state
+      resetAnalysis();
     }
   };
 
@@ -113,6 +115,11 @@ export const PhotoUploadScreen: React.FC = () => {
     setConfirmationOptions(null);
     setSelectedOption(null);
     setAdditionalContext('');
+    setLessonType(null);
+    setLocation('general');
+    setLocationChosen(false);
+    setFormality('neutral');
+    setFormalityChosen(false);
   };
 
   const analyzeImage = async () => {
@@ -131,10 +138,18 @@ export const PhotoUploadScreen: React.FC = () => {
       
       setConfirmationOptions(options);
       
+      // Reset all subsequent choices for clean Screen 2
+      setSelectedOption(null);
+      setAdditionalContext('');
+      setLessonType(null);
+      setLocation('general'); // Reset to default
+      setLocationChosen(false); // Reset tracking
+      setFormality('neutral'); // Reset to default  
+      setFormalityChosen(false); // Reset tracking
+      
     } catch (error) {
       console.error('Image analysis error:', error);
       
-      // Show the specific error message from the AI service
       const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
       Alert.alert('Analysis Failed', errorMessage);
       
@@ -145,7 +160,7 @@ export const PhotoUploadScreen: React.FC = () => {
 
   const handleOptionSelect = (option: string) => {
     setSelectedOption(option);
-    setAdditionalContext(''); // Clear additional context when selecting an option
+    setAdditionalContext('');
   };
 
   const generateLesson = async () => {
@@ -161,7 +176,6 @@ export const PhotoUploadScreen: React.FC = () => {
 
     setIsGeneratingLesson(true);
     try {
-      // Use additional context if provided, otherwise use selected option
       const finalDescription = additionalContext.trim() || selectedOption || '';
       
       const lessonContent = await generateLessonContent(
@@ -171,10 +185,8 @@ export const PhotoUploadScreen: React.FC = () => {
         formality
       );
       
-      // Filter vocabulary based on lesson type
       const filteredVocabulary = filterVocabularyByLength(lessonContent.vocabulary, lessonType);
       
-      // Convert AI vocabulary to lesson format for PracticeScreen
       const lesson: Lesson = {
         id: `ai-lesson-${Date.now()}`,
         title: `AI Lesson: ${finalDescription}`,
@@ -186,7 +198,8 @@ export const PhotoUploadScreen: React.FC = () => {
           id: `phrase-${index}`,
           phrase: vocab.word,
           translation: vocab.translation,
-          literal: vocab.examples[0] || vocab.word
+          literal: vocab.examples[0] || vocab.word,
+          grammarNote: vocab.grammarNote
         })),
         variations: {
           formal: [],
@@ -196,7 +209,6 @@ export const PhotoUploadScreen: React.FC = () => {
         tags: ['ai-generated', lessonType]
       };
       
-      // Navigate directly to PracticeScreen
       navigation.navigate('Practice', { lesson });
       
     } catch (error) {
@@ -231,8 +243,8 @@ export const PhotoUploadScreen: React.FC = () => {
             <View style={{ width: 24 }} />
           </View>
 
-          {/* Instructions - only show if no analysis yet */}
-          {!confirmationOptions && (
+          {/* Instructions */}
+          {!confirmationOptions && !selectedImage && (
             <Card style={styles.instructionsCard}>
               <View style={styles.instructionsHeader}>
                 <Icon name="lightbulb-outline" size={20} color={Colors.primary} />
@@ -247,7 +259,7 @@ export const PhotoUploadScreen: React.FC = () => {
             </Card>
           )}
 
-          {/* Image Selection - only show if no analysis yet */}
+          {/* Image Selection */}
           {!confirmationOptions && (
             <Card>
               <Text style={styles.sectionTitle}>Select Image</Text>
@@ -276,8 +288,8 @@ export const PhotoUploadScreen: React.FC = () => {
             </Card>
           )}
 
-          {/* Context Input - only show if no analysis yet */}
-          {selectedImage && !confirmationOptions && (
+          {/* Context Input */}
+          {!confirmationOptions && (
             <Card>
               <Text style={styles.sectionTitle}>Add Context (Optional)</Text>
               <Text style={styles.sectionDescription}>
@@ -287,7 +299,7 @@ export const PhotoUploadScreen: React.FC = () => {
               <Input
                 value={contextText}
                 onChangeText={setContextText}
-                placeholder="e.g., I want to order food from this menu, I'm at this location and need directions, I want to describe what I see..."
+                placeholder="e.g., I want to order food from this menu, I'm at this location and need directions..."
                 multiline
                 style={styles.contextInput}
                 maxLength={300}
@@ -299,34 +311,19 @@ export const PhotoUploadScreen: React.FC = () => {
             </Card>
           )}
 
-          {/* Analysis Section */}
-          {selectedImage && !confirmationOptions && (
-            <Card>
-              <Text style={styles.sectionTitle}>AI Analysis</Text>
-              
-              <View style={styles.analysisEmpty}>
-                <Icon name="robot-outline" size={48} color={Colors.textSecondary} />
-                <Text style={styles.analysisEmptyText}>
-                  Ready to analyze your image
-                </Text>
-                <Text style={styles.analysisEmptySubtext}>
-                  Our AI will identify learning opportunities
-                </Text>
-              </View>
-
-              <Button
-                title={isAnalyzing ? "Analyzing..." : "Analyze Image"}
-                onPress={analyzeImage}
-                loading={isAnalyzing}
-                disabled={!selectedImage}
-                style={styles.analyzeButton}
-                icon={<Icon name="robot" size={20} color={Colors.background} />}
-              />
-            </Card>
+          {/* Analyze Button */}
+          {!confirmationOptions && (
+            <Button
+              title={isAnalyzing ? "Analyzing..." : "Analyze Image"}
+              onPress={analyzeImage}
+              loading={isAnalyzing}
+              style={styles.analyzeButton}
+              icon={<Icon name="robot" size={20} color={Colors.background} />}
+            />
           )}
 
           {/* Confirmation Options */}
-          {confirmationOptions && (
+          {confirmationOptions && !formality && (
             <Card>
               <View style={styles.analysisHeader}>
                 <Icon name="check-circle" size={20} color={Colors.success} />
@@ -376,83 +373,73 @@ export const PhotoUploadScreen: React.FC = () => {
             </Card>
           )}
 
-          {/* Lesson Length Selection */}
-          {confirmationOptions && (selectedOption || additionalContext.trim()) && (
+          {/* Lesson Length Selection - side by side */}
+          {confirmationOptions && (selectedOption || additionalContext.trim()) && !formality && (
             <Card>
               <Text style={styles.sectionTitle}>Choose Lesson Length</Text>
               
-              <View style={styles.lessonTypeContainer}>
+              <View style={styles.lessonTypeRow}>
                 <TouchableOpacity
                   style={[
-                    styles.lessonTypeButton,
+                    styles.lessonTypeButtonHorizontal,
                     lessonType === 'rapid' && styles.lessonTypeButtonSelected
                   ]}
                   onPress={() => setLessonType('rapid')}
                 >
-                  <Icon name="flash" size={24} color={lessonType === 'rapid' ? Colors.background : Colors.primary} />
+                  <Icon name="flash" size={20} color={lessonType === 'rapid' ? Colors.background : Colors.primary} />
                   <Text style={[
-                    styles.lessonTypeTitle,
-                    lessonType === 'rapid' && styles.lessonTypeTitleSelected
+                    styles.lessonTypeTextHorizontal,
+                    lessonType === 'rapid' && styles.lessonTypeTextSelected
                   ]}>
                     Rapid
                   </Text>
                   <Text style={[
-                    styles.lessonTypeTime,
-                    lessonType === 'rapid' && styles.lessonTypeTimeSelected
+                    styles.lessonTypeSubtextHorizontal,
+                    lessonType === 'rapid' && styles.lessonTypeSubtextSelected
                   ]}>
-                    5 minutes
-                  </Text>
-                  <Text style={[
-                    styles.lessonTypeDescription,
-                    lessonType === 'rapid' && styles.lessonTypeDescriptionSelected
-                  ]}>
-                    Essential words you need right now
+                    5-6 words
                   </Text>
                 </TouchableOpacity>
-
+                
                 <TouchableOpacity
                   style={[
-                    styles.lessonTypeButton,
+                    styles.lessonTypeButtonHorizontal,
                     lessonType === 'full' && styles.lessonTypeButtonSelected
                   ]}
                   onPress={() => setLessonType('full')}
                 >
-                  <Icon name="book-open" size={24} color={lessonType === 'full' ? Colors.background : Colors.primary} />
+                  <Icon name="book-open-variant" size={20} color={lessonType === 'full' ? Colors.background : Colors.primary} />
                   <Text style={[
-                    styles.lessonTypeTitle,
-                    lessonType === 'full' && styles.lessonTypeTitleSelected
+                    styles.lessonTypeTextHorizontal,
+                    lessonType === 'full' && styles.lessonTypeTextSelected
                   ]}>
                     Full
                   </Text>
                   <Text style={[
-                    styles.lessonTypeTime,
-                    lessonType === 'full' && styles.lessonTypeTimeSelected
+                    styles.lessonTypeSubtextHorizontal,
+                    lessonType === 'full' && styles.lessonTypeSubtextSelected
                   ]}>
-                    15 minutes
-                  </Text>
-                  <Text style={[
-                    styles.lessonTypeDescription,
-                    lessonType === 'full' && styles.lessonTypeDescriptionSelected
-                  ]}>
-                    Complete vocabulary + cultural context
+                    15-20 words
                   </Text>
                 </TouchableOpacity>
               </View>
             </Card>
           )}
 
-          {/* Location and Formality Selection */}
+          {/* Location Selection - vertical grid */}
           {lessonType && (
             <Card>
-              <Text style={styles.sectionTitle}>Customize Your Lesson</Text>
+              <Text style={styles.sectionTitle}>Choose Location Context</Text>
+              <Text style={styles.sectionDescription}>
+                This helps us provide region-specific vocabulary and cultural context
+              </Text>
               
-              <Text style={styles.subsectionTitle}>Where will you use this?</Text>
-              <View style={styles.optionsGrid}>
+              <View style={styles.locationGrid}>
                 {locations.map((loc) => (
                   <TouchableOpacity
                     key={loc.value}
                     style={[
-                      styles.locationButton,
+                      styles.locationButtonGrid,
                       location === loc.value && styles.locationButtonSelected
                     ]}
                     onPress={() => setLocation(loc.value)}
@@ -466,8 +453,16 @@ export const PhotoUploadScreen: React.FC = () => {
                   </TouchableOpacity>
                 ))}
               </View>
+            </Card>
+          )}
 
-              <Text style={styles.subsectionTitle}>Formality Level</Text>
+          {/* Formality Level */}
+          {lessonType && location && selectedOption && (
+            <Card>
+              <Text style={styles.sectionTitle}>Choose Formality Level</Text>
+              <Text style={styles.sectionDescription}>
+                How formal should the language be?
+              </Text>
               <View style={styles.formalityContainer}>
                 {formalityLevels.map((level) => (
                   <TouchableOpacity
@@ -490,23 +485,17 @@ export const PhotoUploadScreen: React.FC = () => {
             </Card>
           )}
 
-          {/* Generate Lesson */}
-          {lessonType && (
-            <Card style={styles.lessonCard}>
-              <Text style={styles.sectionTitle}>Ready to Learn!</Text>
-              <Text style={styles.lessonDescription}>
-                Start your {lessonType} lesson and practice immediately
-              </Text>
-              
-              <Button
-                title={isGeneratingLesson ? "Generating..." : "Start Practice"}
-                onPress={generateLesson}
-                loading={isGeneratingLesson}
-                style={styles.generateButton}
-                icon={<Icon name="play" size={20} color={Colors.background} />}
-              />
-            </Card>
+          {/* Generate Lesson Button - only after all selections */}
+          {lessonType && location && formality && selectedOption && (
+            <Button
+              title={isGeneratingLesson ? "Creating Your Lesson..." : "Generate Lesson"}
+              onPress={generateLesson}
+              loading={isGeneratingLesson}
+              style={styles.generateButton}
+              icon={<Icon name="magic-staff" size={20} color={Colors.background} />}
+            />
           )}
+
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -516,24 +505,24 @@ export const PhotoUploadScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.background,
   },
   scrollView: {
     flex: 1,
+    padding: Layout.spacing.md,
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    padding: Layout.spacing.lg,
+    alignItems: 'center',
+    marginBottom: Layout.spacing.lg,
   },
   title: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: '600',
     color: Colors.text,
   },
   instructionsCard: {
-    backgroundColor: '#f0f8ff',
     marginBottom: Layout.spacing.md,
   },
   instructionsHeader: {
@@ -549,11 +538,11 @@ const styles = StyleSheet.create({
   },
   instructionsText: {
     fontSize: 14,
-    color: Colors.text,
+    color: Colors.textSecondary,
     lineHeight: 20,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: Colors.text,
     marginBottom: Layout.spacing.sm,
@@ -564,17 +553,18 @@ const styles = StyleSheet.create({
     marginBottom: Layout.spacing.md,
   },
   uploadArea: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Layout.spacing.xl,
     borderWidth: 2,
     borderColor: Colors.border,
     borderStyle: 'dashed',
-    borderRadius: Layout.borderRadius.lg,
-    padding: Layout.spacing.xl,
-    alignItems: 'center',
-    backgroundColor: '#fafafa',
+    borderRadius: Layout.borderRadius.md,
+    backgroundColor: Colors.surface,
   },
   uploadText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '500',
     color: Colors.text,
     marginTop: Layout.spacing.sm,
   },
@@ -620,23 +610,19 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     marginTop: Layout.spacing.xs,
   },
-  analysisEmpty: {
-    alignItems: 'center',
-    paddingVertical: Layout.spacing.xl,
+  analyzeButton: {
+    marginVertical: Layout.spacing.md,
   },
-  analysisEmptyText: {
+  analysisHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Layout.spacing.md,
+  },
+  analysisHeaderText: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.text,
-    marginTop: Layout.spacing.sm,
-  },
-  analysisEmptySubtext: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    marginTop: Layout.spacing.xs,
-  },
-  confirmationSection: {
-    marginBottom: Layout.spacing.md,
+    color: Colors.success,
+    marginLeft: Layout.spacing.sm,
   },
   confirmationQuestion: {
     fontSize: 16,
@@ -657,8 +643,8 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
   },
   optionButtonSelected: {
-    backgroundColor: Colors.primary + '10',
     borderColor: Colors.primary,
+    backgroundColor: Colors.primary + '10',
   },
   optionButtonText: {
     fontSize: 14,
@@ -672,79 +658,62 @@ const styles = StyleSheet.create({
   orText: {
     fontSize: 14,
     color: Colors.textSecondary,
-    marginBottom: Layout.spacing.sm,
     textAlign: 'center',
+    marginVertical: Layout.spacing.sm,
   },
   additionalContextInput: {
     minHeight: 60,
     textAlignVertical: 'top',
   },
-  lessonTypeContainer: {
+  lessonTypeRow: {
     flexDirection: 'row',
     gap: Layout.spacing.md,
   },
-  lessonTypeButton: {
+  lessonTypeButtonHorizontal: {
     flex: 1,
     backgroundColor: Colors.surface,
     padding: Layout.spacing.md,
-    borderRadius: Layout.borderRadius.md,
+    borderRadius: Layout.borderRadius.lg,
     borderWidth: 2,
     borderColor: Colors.border,
     alignItems: 'center',
   },
   lessonTypeButtonSelected: {
-    backgroundColor: Colors.primary,
     borderColor: Colors.primary,
+    backgroundColor: Colors.primary,
   },
-  lessonTypeTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: Colors.text,
-    marginTop: Layout.spacing.xs,
-  },
-  lessonTypeTitleSelected: {
-    color: Colors.background,
-  },
-  lessonTypeTime: {
+  lessonTypeTextHorizontal: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.primary,
+    color: Colors.text,
     marginTop: Layout.spacing.xs,
+    marginBottom: Layout.spacing.xs,
   },
-  lessonTypeTimeSelected: {
+  lessonTypeTextSelected: {
     color: Colors.background,
   },
-  lessonTypeDescription: {
-    fontSize: 12,
+  lessonTypeSubtextHorizontal: {
+    fontSize: 11,
     color: Colors.textSecondary,
     textAlign: 'center',
-    marginTop: Layout.spacing.xs,
   },
-  lessonTypeDescriptionSelected: {
-    color: Colors.background,
+  lessonTypeSubtextSelected: {
+    color: Colors.background + 'CC',
   },
-  subsectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Colors.text,
-    marginBottom: Layout.spacing.sm,
-    marginTop: Layout.spacing.md,
-  },
-  optionsGrid: {
+  locationGrid: {
     gap: Layout.spacing.sm,
-    marginBottom: Layout.spacing.md,
   },
-  locationButton: {
+  locationButtonGrid: {
     backgroundColor: Colors.surface,
     paddingHorizontal: Layout.spacing.md,
-    paddingVertical: Layout.spacing.sm,
+    paddingVertical: Layout.spacing.md,
     borderRadius: Layout.borderRadius.md,
     borderWidth: 1,
     borderColor: Colors.border,
   },
   locationButtonSelected: {
-    backgroundColor: Colors.primary + '10',
     borderColor: Colors.primary,
+    backgroundColor: Colors.primary + '20',
   },
   locationButtonText: {
     fontSize: 14,
@@ -762,54 +731,28 @@ const styles = StyleSheet.create({
   formalityButton: {
     flex: 1,
     backgroundColor: Colors.surface,
-    paddingVertical: Layout.spacing.sm,
+    paddingVertical: Layout.spacing.md,
+    paddingHorizontal: Layout.spacing.sm,
     borderRadius: Layout.borderRadius.md,
     borderWidth: 1,
     borderColor: Colors.border,
     alignItems: 'center',
   },
   formalityButtonSelected: {
-    backgroundColor: Colors.primary,
     borderColor: Colors.primary,
+    backgroundColor: Colors.primary + '20',
   },
   formalityButtonText: {
     fontSize: 14,
     color: Colors.text,
   },
   formalityButtonTextSelected: {
-    color: Colors.background,
+    color: Colors.primary,
     fontWeight: '600',
-  },
-  analysisHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: Layout.spacing.sm,
-  },
-  analysisHeaderText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.success,
-    marginLeft: Layout.spacing.xs,
-  },
-  analysisText: {
-    fontSize: 14,
-    color: Colors.text,
-    lineHeight: 20,
-  },
-  analyzeButton: {
-    marginTop: Layout.spacing.md,
-  },
-  lessonCard: {
-    backgroundColor: '#fff3e0',
-    borderLeftWidth: 4,
-    borderLeftColor: Colors.primary,
-  },
-  lessonDescription: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    marginBottom: Layout.spacing.lg,
   },
   generateButton: {
+    marginTop: Layout.spacing.md,
+    marginBottom: Layout.spacing.lg,
     backgroundColor: Colors.success,
   },
 });

@@ -1,3 +1,4 @@
+// src/types/index.ts
 export interface User {
   id: string;
   email: string;
@@ -33,6 +34,7 @@ export interface Phrase {
   pronunciation?: string;
   audioUrl?: string;
   literal?: string;
+  grammarNote?: string; // Added for grammar tips
 }
 
 export interface LessonVariations {
