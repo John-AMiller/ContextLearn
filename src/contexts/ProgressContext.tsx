@@ -5,6 +5,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import * as storageService from '@/services/storage.service';
 import * as streakService from '@/services/streak.service';
 import { supabase } from '@/utils/supabase';
+import { formatRelativeTime } from '@/utils/lessonHelpers';
 
 interface ProgressContextType {
   completedScenarios: CompletedScenario[];

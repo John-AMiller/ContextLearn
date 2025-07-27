@@ -1,3 +1,4 @@
+// src/screens/LessonCustomizationScreen.tsx
 import React, { useState } from 'react';
 import { 
   View, 
@@ -6,17 +7,20 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  TouchableOpacity
+  TouchableOpacity,
+  Alert
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { RootStackNavigationProp, LessonCustomizationScreenRouteProp } from '@/types/navigation';
 import { useLanguage } from '@/hooks/useLanguage';
+import { Lesson } from '@/types';
 import { Button } from '@/components/common/Button';
 import { Card } from '@/components/common/Card';
 import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
-import * as lessonService from '@/services/lesson.service';
+import { generateLessonContent, filterVocabularyByLength } from '@/services/ai.service';
+import { generateLessonTitle, generateLessonId } from '@/utils/lessonHelpers';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 export const LessonCustomizationScreen: React.FC = () => {
@@ -25,6 +29,7 @@ export const LessonCustomizationScreen: React.FC = () => {
   const { currentLanguage } = useLanguage();
   const { inputText } = route.params;
   
+  const [lessonType, setLessonType] = useState<'rapid' | 'full' | null>(null);
   const [location, setLocation] = useState('');
   const [formality, setFormality] = useState<'casual' | 'neutral' | 'formal'>('neutral');
   const [isLoading, setIsLoading] = useState(false);
@@ -33,26 +38,70 @@ export const LessonCustomizationScreen: React.FC = () => {
     { label: 'Mexico City, Mexico', value: 'mexico' },
     { label: 'Madrid, Spain', value: 'spain' },
     { label: 'Buenos Aires, Argentina', value: 'argentina' },
-    { label: 'Rome, Italy', value: 'italy' },
+    { label: 'Santiago, Chile', value: 'chile' },
     { label: 'General/Multiple regions', value: 'general' }
   ];
 
   const formalityLevels: Array<'casual' | 'neutral' | 'formal'> = ['casual', 'neutral', 'formal'];
 
   const handleGenerateLesson = async () => {
-    if (!inputText.trim()) return;
+    if (!inputText.trim()) {
+      Alert.alert('Error', 'Please provide some text to generate a lesson from');
+      return;
+    }
+
+    if (!lessonType) {
+      Alert.alert('Please select a lesson length');
+      return;
+    }
+
+    if (!location) {
+      Alert.alert('Please select a location');
+      return;
+    }
 
     setIsLoading(true);
     try {
-      const lesson = await lessonService.generateLessonFromScenario(
+      const lessonContent = await generateLessonContent(
         inputText,
         currentLanguage,
         location,
         formality
       );
-      navigation.navigate('Lesson', { lesson });
+      
+      const filteredVocabulary = filterVocabularyByLength(lessonContent.vocabulary, lessonType);
+      
+      // Generate meaningful title and ID
+      const lessonTitle = generateLessonTitle(inputText);
+      const lessonId = generateLessonId(lessonTitle);
+      
+      const lesson: Lesson = {
+        id: lessonId,
+        title: lessonTitle,
+        scenario: lessonContent.scenario,
+        language: currentLanguage,
+        difficulty: (lessonType === 'rapid' ? 2 : 3) as 1 | 2 | 3 | 4 | 5,
+        culturalNotes: lessonContent.culturalNotes,
+        phrases: filteredVocabulary.map((vocab, index) => ({
+          id: `phrase-${index}`,
+          phrase: vocab.word,
+          translation: vocab.translation,
+          literal: vocab.examples[0] || vocab.word,
+          grammarNote: vocab.grammarNote
+        })),
+        variations: {
+          formal: [],
+          informal: [],
+          regional: {}
+        },
+        tags: ['text-generated', lessonType]
+      };
+      
+      navigation.navigate('Practice', { lesson });
     } catch (error) {
       console.error('Error generating lesson:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to generate lesson';
+      Alert.alert('Lesson Generation Failed', errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -77,6 +126,60 @@ export const LessonCustomizationScreen: React.FC = () => {
           <Card style={styles.inputSummaryCard}>
             <Text style={styles.inputSummaryLabel}>You want to learn:</Text>
             <Text style={styles.inputSummaryText}>"{inputText}"</Text>
+          </Card>
+
+          {/* Lesson Length Selection */}
+          <Card>
+            <Text style={styles.sectionTitle}>Choose Lesson Length</Text>
+            <Text style={styles.sectionDescription}>
+              How much vocabulary would you like to learn?
+            </Text>
+            
+            <View style={styles.lessonTypeRow}>
+              <TouchableOpacity
+                style={[
+                  styles.lessonTypeButton,
+                  lessonType === 'rapid' && styles.lessonTypeButtonActive
+                ]}
+                onPress={() => setLessonType('rapid')}
+              >
+                <Icon name="flash" size={20} color={lessonType === 'rapid' ? Colors.background : Colors.primary} />
+                <Text style={[
+                  styles.lessonTypeText,
+                  lessonType === 'rapid' && styles.lessonTypeTextActive
+                ]}>
+                  Rapid
+                </Text>
+                <Text style={[
+                  styles.lessonTypeSubtext,
+                  lessonType === 'rapid' && styles.lessonTypeSubtextActive
+                ]}>
+                  5-6 words
+                </Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[
+                  styles.lessonTypeButton,
+                  lessonType === 'full' && styles.lessonTypeButtonActive
+                ]}
+                onPress={() => setLessonType('full')}
+              >
+                <Icon name="book-open-variant" size={20} color={lessonType === 'full' ? Colors.background : Colors.primary} />
+                <Text style={[
+                  styles.lessonTypeText,
+                  lessonType === 'full' && styles.lessonTypeTextActive
+                ]}>
+                  Full
+                </Text>
+                <Text style={[
+                  styles.lessonTypeSubtext,
+                  lessonType === 'full' && styles.lessonTypeSubtextActive
+                ]}>
+                  15-20 words
+                </Text>
+              </TouchableOpacity>
+            </View>
           </Card>
 
           {/* Location Selection */}
@@ -139,7 +242,7 @@ export const LessonCustomizationScreen: React.FC = () => {
             <Button
               title="Generate Personalized Lesson"
               onPress={handleGenerateLesson}
-              disabled={!location}
+              disabled={!lessonType || !location}
               loading={isLoading}
               icon={<Icon name="auto-fix" size={20} color={Colors.background} />}
             />
@@ -174,6 +277,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.primary + '30',
     marginBottom: Layout.spacing.md,
+    marginHorizontal: Layout.spacing.lg,
   },
   inputSummaryLabel: {
     fontSize: 14,
@@ -196,6 +300,41 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.textSecondary,
     marginBottom: Layout.spacing.md,
+  },
+  lessonTypeRow: {
+    flexDirection: 'row',
+    gap: Layout.spacing.md,
+  },
+  lessonTypeButton: {
+    flex: 1,
+    backgroundColor: Colors.surface,
+    padding: Layout.spacing.md,
+    borderRadius: Layout.borderRadius.lg,
+    borderWidth: 2,
+    borderColor: Colors.border,
+    alignItems: 'center',
+  },
+  lessonTypeButtonActive: {
+    borderColor: Colors.primary,
+    backgroundColor: Colors.primary,
+  },
+  lessonTypeText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.text,
+    marginTop: Layout.spacing.xs,
+    marginBottom: Layout.spacing.xs,
+  },
+  lessonTypeTextActive: {
+    color: Colors.background,
+  },
+  lessonTypeSubtext: {
+    fontSize: 11,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+  },
+  lessonTypeSubtextActive: {
+    color: Colors.background + 'CC',
   },
   optionsGrid: {
     gap: Layout.spacing.sm,

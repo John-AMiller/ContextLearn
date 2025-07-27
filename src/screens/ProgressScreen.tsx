@@ -63,26 +63,26 @@ const ProgressScreen: React.FC = () => {
             </View>
           ) : (
             completedScenarios.map((scenario) => (
-              <View key={scenario.id} style={styles.scenarioItem}>
-                <View style={styles.scenarioInfo}>
-                  <Text style={styles.scenarioTitle}>{scenario.title}</Text>
-                  <Text style={styles.scenarioDate}>
-                    {new Date(scenario.lastPracticed).toLocaleDateString()}
-                  </Text>
-                </View>
-                <View style={styles.masteryContainer}>
-                  <Text style={styles.masteryText}>{scenario.mastery}%</Text>
-                  <View style={styles.masteryBar}>
-                    <View 
-                      style={[
-                        styles.masteryFill, 
-                        { width: `${scenario.mastery}%` }
-                      ]} 
-                    />
-                  </View>
-                </View>
-              </View>
-            ))
+  <View key={scenario.id} style={styles.scenarioItem}>
+    <View style={styles.scenarioInfo}>
+      <Text style={styles.scenarioTitle}>{scenario.title}</Text>
+      <Text style={styles.scenarioDate}>
+        {scenario.lastPracticed}
+      </Text>
+    </View>
+    <View style={styles.masteryContainer}>
+      <Text style={styles.masteryText}>{scenario.mastery}%</Text>
+      <View style={styles.masteryBar}>
+        <View 
+          style={[
+            styles.masteryFill, 
+            { width: `${scenario.mastery}%` }
+          ]} 
+        />
+      </View>
+    </View>
+  </View>
+))
           )}
         </Card>
       </ScrollView>

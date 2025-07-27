@@ -24,6 +24,7 @@ import { Layout } from '@/constants/layout';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import * as ImagePicker from 'expo-image-picker';
 import { generateConfirmationOptions, generateLessonContent, filterVocabularyByLength, AIConfirmationOptions, AILessonContent, VocabularyItem } from '@/services/ai.service';
+import { generateLessonTitle, generateLessonId } from '@/utils/lessonHelpers';
 
 export const PhotoUploadScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
@@ -187,9 +188,14 @@ export const PhotoUploadScreen: React.FC = () => {
       
       const filteredVocabulary = filterVocabularyByLength(lessonContent.vocabulary, lessonType);
       
+      // Generate meaningful title and ID
+      const lessonTitle = generateLessonTitle(finalDescription);
+      const lessonId = generateLessonId(lessonTitle);
+
+      
       const lesson: Lesson = {
-        id: `ai-lesson-${Date.now()}`,
-        title: `AI Lesson: ${finalDescription}`,
+        id: lessonId,
+        title: lessonTitle,
         scenario: lessonContent.scenario,
         language: currentLanguage,
         difficulty: (lessonType === 'rapid' ? 2 : 3) as 1 | 2 | 3 | 4 | 5,

@@ -22,6 +22,7 @@ import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import * as Speech from 'expo-speech';
+import { formatRelativeTime } from '@/utils/lessonHelpers';
 
 type Phase = 'teaching' | 'testing';
 type TeachingMode = 'flashcard' | 'individual';
@@ -203,7 +204,7 @@ export const PracticeScreen: React.FC = () => {
       id: lesson.id,
       title: lesson.title,
       mastery: masteryLevel,
-      lastPracticed: 'just now'
+      lastPracticed: formatRelativeTime(new Date())
     });
 
     updateProgress({
@@ -263,7 +264,7 @@ export const PracticeScreen: React.FC = () => {
     if (teachingMode === 'flashcard') {
       return (
         <Card style={styles.teachingCard}>
-          <Text style={styles.teachingTitle}>Learning Mode: Flashcards</Text>
+          <Text style={styles.teachingTitle}>{lesson.title}</Text>
           <Text style={styles.phaseIndicator}>
             Card {currentIndex + 1} of {lesson.phrases.length}
           </Text>
@@ -335,7 +336,7 @@ export const PracticeScreen: React.FC = () => {
       // Individual teaching mode
       return (
         <Card style={styles.teachingCard}>
-          <Text style={styles.teachingTitle}>Learning Mode: Individual</Text>
+          <Text style={styles.teachingTitle}>{lesson.title}</Text>
           <Text style={styles.phaseIndicator}>
             Word {currentIndex + 1} of {lesson.phrases.length}
           </Text>
