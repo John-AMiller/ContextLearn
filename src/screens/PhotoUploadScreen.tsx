@@ -320,11 +320,11 @@ export const PhotoUploadScreen: React.FC = () => {
           {/* Analyze Button */}
           {!confirmationOptions && (
             <Button
-              title={isAnalyzing ? "Analyzing..." : "Analyze Image"}
+              title={isAnalyzing ? "Gazing into the Oracle..." : "Consult the Oracle"}
               onPress={analyzeImage}
               loading={isAnalyzing}
               style={styles.analyzeButton}
-              icon="robot"
+              icon="crystal-ball"
             />
           )}
 

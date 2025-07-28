@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+// src/screens/AccountManagementScreen.tsx - FIXED: Profile picture box styling and saving
+
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -6,7 +8,6 @@ import {
   ScrollView, 
   TouchableOpacity,
   Alert,
-  TextInput,
   Modal,
   Image
 } from 'react-native';
@@ -22,6 +23,7 @@ import { Layout } from '@/constants/layout';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '@/utils/supabase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const AccountManagementScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
@@ -35,6 +37,22 @@ export const AccountManagementScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
 
+  // Load saved profile image on component mount
+  useEffect(() => {
+    loadSavedProfileImage();
+  }, [user]);
+
+  const loadSavedProfileImage = async () => {
+    try {
+      const savedImageUri = await AsyncStorage.getItem(`profileImage_${user?.id}`);
+      if (savedImageUri) {
+        setProfileImage(savedImageUri);
+      }
+    } catch (error) {
+      console.error('Error loading saved profile image:', error);
+    }
+  };
+
   const handleProfilePicturePress = () => {
     Alert.alert(
       'Change Profile Picture',
@@ -42,6 +60,7 @@ export const AccountManagementScreen: React.FC = () => {
       [
         { text: 'Camera', onPress: takePhoto },
         { text: 'Photo Library', onPress: pickImage },
+        { text: 'Remove Picture', onPress: removePicture, style: 'destructive' },
         { text: 'Cancel', style: 'cancel' }
       ]
     );
@@ -63,8 +82,7 @@ export const AccountManagementScreen: React.FC = () => {
     });
 
     if (!result.canceled) {
-      setProfileImage(result.assets[0].uri);
-      // TODO: Upload to storage and update user profile
+      await saveProfilePicture(result.assets[0].uri);
     }
   };
 
@@ -77,8 +95,38 @@ export const AccountManagementScreen: React.FC = () => {
     });
 
     if (!result.canceled) {
-      setProfileImage(result.assets[0].uri);
-      // TODO: Upload to storage and update user profile
+      await saveProfilePicture(result.assets[0].uri);
+    }
+  };
+
+  const removePicture = async () => {
+    try {
+      setProfileImage(null);
+      // Remove from AsyncStorage
+      await AsyncStorage.removeItem(`profileImage_${user?.id}`);
+      Alert.alert('Success', 'Profile picture removed');
+    } catch (error) {
+      console.error('Error removing profile picture:', error);
+      Alert.alert('Error', 'Failed to remove profile picture');
+    }
+  };
+
+  const saveProfilePicture = async (imageUri: string) => {
+    try {
+      setIsLoading(true);
+      setProfileImage(imageUri);
+      
+      // Save to AsyncStorage for persistence
+      await AsyncStorage.setItem(`profileImage_${user?.id}`, imageUri);
+      
+      // TODO: Eventually upload to Supabase storage and update user profile
+      
+      Alert.alert('Success', 'Profile picture updated!');
+    } catch (error) {
+      console.error('Error saving profile picture:', error);
+      Alert.alert('Error', 'Failed to save profile picture');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -92,7 +140,7 @@ export const AccountManagementScreen: React.FC = () => {
     try {
       await updateProfile({ name: newDisplayName.trim() });
       setIsEditingName(false);
-      Alert.alert('Success', 'Display name updated successfully');
+      Alert.alert('Success', 'Display name updated');
     } catch (error) {
       Alert.alert('Error', 'Failed to update display name');
     } finally {
@@ -111,35 +159,29 @@ export const AccountManagementScreen: React.FC = () => {
       const { error } = await supabase.auth.updateUser({ email: newEmail.trim() });
       if (error) throw error;
       
-      Alert.alert(
-        'Check Your Email', 
-        'We sent a confirmation link to your new email address. Please click the link to complete the change.'
-      );
       setIsEditingEmail(false);
       setNewEmail('');
+      Alert.alert('Success', 'Check your email to confirm the change');
     } catch (error) {
-      Alert.alert('Error', 'Failed to update email');
+      Alert.alert('Error', 'Failed to change email');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleResetPassword = async () => {
-    if (!user?.email) return;
-
+  const handleResetPassword = () => {
     Alert.alert(
       'Reset Password',
-      'Send a password reset link to your email?',
+      'We\'ll send a password reset link to your email address.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Send Link',
+          text: 'Send Reset Link',
           onPress: async () => {
             try {
-              const { error } = await supabase.auth.resetPasswordForEmail(user.email);
+              const { error } = await supabase.auth.resetPasswordForEmail(user?.email || '');
               if (error) throw error;
-              
-              Alert.alert('Check Your Email', 'We sent a password reset link to your email address.');
+              Alert.alert('Success', 'Password reset link sent to your email');
             } catch (error) {
               Alert.alert('Error', 'Failed to send reset email');
             }
@@ -199,8 +241,8 @@ export const AccountManagementScreen: React.FC = () => {
           <View style={{ width: 24 }} />
         </View>
 
-        {/* Profile Picture Section */}
-        <Card style={styles.profileSection}>
+        {/* Profile Picture Section - FIXED: Removed Card wrapper to eliminate border */}
+        <View style={styles.profileSection}>
           <Text style={styles.sectionTitle}>Profile Picture</Text>
           <TouchableOpacity style={styles.avatarContainer} onPress={handleProfilePicturePress}>
             {profileImage ? (
@@ -216,7 +258,7 @@ export const AccountManagementScreen: React.FC = () => {
               <Icon name="camera" size={16} color={Colors.background} />
             </View>
           </TouchableOpacity>
-        </Card>
+        </View>
 
         {/* Display Name Section */}
         <Card>
@@ -363,7 +405,10 @@ const styles = StyleSheet.create({
   },
   profileSection: {
     alignItems: 'center',
-    marginBottom: Layout.spacing.md,
+    marginBottom: Layout.spacing.lg,
+    paddingVertical: Layout.spacing.lg,
+    paddingHorizontal: Layout.spacing.md,
+    // Removed Card styling - now just a clean container
   },
   sectionTitle: {
     fontSize: 18,
@@ -371,14 +416,19 @@ const styles = StyleSheet.create({
     color: Colors.text,
     marginBottom: Layout.spacing.md,
   },
+  // FIXED: Improved avatar container styling
   avatarContainer: {
     position: 'relative',
+    alignSelf: 'center', // Center the avatar
   },
+  // FIXED: Clean avatar styling without weird box
   avatar: {
     width: 100,
     height: 100,
     borderRadius: 50,
+    backgroundColor: Colors.surface, // Clean background
   },
+  // FIXED: Better placeholder styling
   avatarPlaceholder: {
     width: 100,
     height: 100,
@@ -386,24 +436,31 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
+    // Remove any border or shadow that might cause "weird box"
   },
   avatarText: {
     fontSize: 36,
     fontWeight: 'bold',
     color: Colors.background,
   },
+  // FIXED: Better camera icon positioning
   cameraIcon: {
     position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    bottom: 2,
+    right: 2,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
     borderColor: Colors.background,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   editSection: {
     gap: Layout.spacing.md,

@@ -129,7 +129,7 @@ export const HomeScreen: React.FC = () => {
               </View>
               
               <Text style={styles.greeting}>Welcome, Learned One</Text>
-              <Text style={styles.subtitle}>Your linguistic journey continues</Text>
+              <Text style={styles.subtitle}>Your linguistic journey continues in {currentLanguage.charAt(0).toUpperCase() + currentLanguage.slice(1)} {getLanguageFlag(currentLanguage)}</Text>
               
               <View style={styles.progressOrbs}>
                 <View style={styles.orb}>
@@ -157,13 +157,13 @@ export const HomeScreen: React.FC = () => {
             <View style={styles.scrollAreaOverlay} />
             <View style={styles.scrollContent}>
               <View style={styles.scrollLabelContainer}>
-                <Text style={styles.scrollLabel}>📜 Ask the oracles what you wish to learn...</Text>
+                <Text style={styles.scrollLabel}>📜 What do you wish to learn?</Text>
               </View>
               
               <TextInput
                 style={styles.ancientInput}
-                //placeholder="Ask the oracles what you wish to learn..."
-                //placeholderTextColor="rgba(226, 232, 240, 0.5)"
+                placeholder="The scribes await your request..."
+                placeholderTextColor="rgba(226, 232, 240, 0.5)"
                 value={inputText}
                 onChangeText={setInputText}
                 multiline

@@ -1,11 +1,14 @@
-import React from 'react';
+// src/screens/ProfileScreen.tsx - FIXED: Added profile picture loading from AsyncStorage
+
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
   StyleSheet, 
   ScrollView, 
   TouchableOpacity,
-  Alert 
+  Alert,
+  Image
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -19,12 +22,42 @@ import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
 import { getLanguageFlag } from '@/utils/helpers';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const ProfileScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
   const { user, signOut } = useAuth();
   const { currentLanguage, nativeLanguage } = useLanguage();
   const { totalXP, streak, longestStreak, completedScenarios } = useProgress();
+  
+  // ADDED: State for profile image
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+
+  // ADDED: Load saved profile image on component mount
+  useEffect(() => {
+    loadSavedProfileImage();
+  }, [user]);
+
+  // ADDED: Function to load saved profile image from AsyncStorage
+  const loadSavedProfileImage = async () => {
+    try {
+      const savedImageUri = await AsyncStorage.getItem(`profileImage_${user?.id}`);
+      if (savedImageUri) {
+        setProfileImage(savedImageUri);
+      }
+    } catch (error) {
+      console.error('Error loading saved profile image:', error);
+    }
+  };
+
+  // ADDED: Refresh profile image when screen gets focus (when coming back from AccountManagement)
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadSavedProfileImage();
+    });
+
+    return unsubscribe;
+  }, [navigation, user]);
 
   const handleSignOut = async () => {
     Alert.alert(
@@ -71,11 +104,16 @@ export const ProfileScreen: React.FC = () => {
         <Card style={styles.userCard}>
           <TouchableOpacity style={styles.userInfo} onPress={handleAccountManagement}>
             <View style={styles.userSection}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>
-                  {user?.name?.charAt(0).toUpperCase() || 'U'}
-                </Text>
-              </View>
+              {/* UPDATED: Show saved profile image or fallback to letter */}
+              {profileImage ? (
+                <Image source={{ uri: profileImage }} style={styles.avatar} />
+              ) : (
+                <View style={styles.avatarPlaceholder}>
+                  <Text style={styles.avatarText}>
+                    {user?.name?.charAt(0).toUpperCase() || 'U'}
+                  </Text>
+                </View>
+              )}
               <View style={styles.userDetails}>
                 <Text style={styles.userName}>{user?.name}</Text>
                 <Text style={styles.userEmail}>{user?.email}</Text>
@@ -87,38 +125,51 @@ export const ProfileScreen: React.FC = () => {
 
         <Card style={styles.levelCard}>
           <View style={styles.levelHeader}>
-            <Text style={styles.levelTitle}>
-              {getLanguageFlag(currentLanguage)} {currentLanguage?.charAt(0).toUpperCase() + currentLanguage?.slice(1)}
+            <Text style={styles.levelTitle}>Scholar Level</Text>
+            <Text style={styles.levelValue}>
+              {totalXP > 1000 ? 'Master' : totalXP > 500 ? 'Advanced' : 'Beginner'}
             </Text>
-            <Text style={styles.levelNumber}>Level {Math.floor(totalXP / 100) + 1}</Text>
           </View>
-          <View style={styles.progressBarContainer}>
-            <View style={[styles.progressBar, { width: `${(totalXP % 100)}%` }]} />
+          <View style={styles.levelDetails}>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>{totalXP}</Text>
+              <Text style={styles.statLabel}>Total XP</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>{streak}</Text>
+              <Text style={styles.statLabel}>Day Streak</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>{longestStreak}</Text>
+              <Text style={styles.statLabel}>Best Streak</Text>
+            </View>
           </View>
-          <Text style={styles.xpText}>{totalXP % 100}/100 XP to next level</Text>
         </Card>
 
-        <View style={styles.statsGrid}>
-          <Card style={styles.statCard}>
-            <Text style={styles.statNumber}>{streak}</Text>
-            <Text style={styles.statLabel}>Day Streak</Text>
-          </Card>
-          <Card style={styles.statCard}>
-            <Text style={styles.statNumber}>{longestStreak}</Text>
-            <Text style={styles.statLabel}>Best Streak</Text>
-          </Card>
-          <Card style={styles.statCard}>
-            <Text style={styles.statNumber}>{completedScenarios.length}</Text>
-            <Text style={styles.statLabel}>Completed</Text>
-          </Card>
-        </View>
+        <Card>
+          <Text style={styles.sectionTitle}>Languages</Text>
+          <View style={styles.languageItem}>
+            <Text style={styles.languageFlag}>{getLanguageFlag(nativeLanguage)}</Text>
+            <View style={styles.languageInfo}>
+              <Text style={styles.languageName}>{nativeLanguage}</Text>
+              <Text style={styles.languageLabel}>Native Language</Text>
+            </View>
+          </View>
+          <View style={styles.languageItem}>
+            <Text style={styles.languageFlag}>{getLanguageFlag(currentLanguage)}</Text>
+            <View style={styles.languageInfo}>
+              <Text style={styles.languageName}>{currentLanguage}</Text>
+              <Text style={styles.languageLabel}>Currently Learning</Text>
+            </View>
+          </View>
+        </Card>
 
         <Card>
-          <Text style={styles.sectionTitle}>Achievements</Text>
+          <Text style={styles.sectionTitle}>Recent Achievements</Text>
           {achievements.map((achievement, index) => (
             <View key={index} style={styles.achievementItem}>
               <Text style={styles.achievementIcon}>{achievement.icon}</Text>
-              <View style={styles.achievementText}>
+              <View style={styles.achievementInfo}>
                 <Text style={styles.achievementTitle}>{achievement.title}</Text>
                 <Text style={styles.achievementDescription}>{achievement.description}</Text>
               </View>
@@ -140,7 +191,7 @@ export const ProfileScreen: React.FC = () => {
             title="Sign Out"
             variant="outline"
             onPress={handleSignOut}
-            icon={<Icon name="logout" size={20} color={Colors.danger} />}
+            icon="logout"
           />
         </View>
       </ScrollView>
@@ -178,7 +229,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
   },
+  // UPDATED: Style for actual image
   avatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: Colors.surface,
+  },
+  // ADDED: Style for letter placeholder
+  avatarPlaceholder: {
     width: 60,
     height: 60,
     borderRadius: 30,
@@ -211,52 +270,35 @@ const styles = StyleSheet.create({
   levelHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: Layout.spacing.sm,
-  },
-  levelTitle: {
-    fontSize: 16,
-    color: Colors.background,
-    textTransform: 'capitalize',
-  },
-  levelNumber: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: Colors.background,
-  },
-  progressBarContainer: {
-    height: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: 4,
-    marginBottom: Layout.spacing.sm,
-  },
-  progressBar: {
-    height: '100%',
-    backgroundColor: Colors.background,
-    borderRadius: 4,
-  },
-  xpText: {
-    fontSize: 14,
-    color: Colors.background,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    gap: Layout.spacing.sm,
+    alignItems: 'center',
     marginBottom: Layout.spacing.md,
   },
-  statCard: {
-    flex: 1,
-    alignItems: 'center',
-    padding: Layout.spacing.md,
+  levelTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: Colors.background,
   },
-  statNumber: {
-    fontSize: 24,
+  levelValue: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: Colors.background,
+  },
+  levelDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  statItem: {
+    alignItems: 'center',
+  },
+  statValue: {
+    fontSize: 20,
     fontWeight: 'bold',
-    color: Colors.primary,
+    color: Colors.background,
   },
   statLabel: {
     fontSize: 12,
-    color: Colors.textSecondary,
-    marginTop: Layout.spacing.xs,
+    color: Colors.background,
+    opacity: 0.8,
   },
   sectionTitle: {
     fontSize: 18,
@@ -264,31 +306,53 @@ const styles = StyleSheet.create({
     color: Colors.text,
     marginBottom: Layout.spacing.md,
   },
+  languageItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Layout.spacing.sm,
+  },
+  languageFlag: {
+    fontSize: 24,
+    marginRight: Layout.spacing.md,
+  },
+  languageInfo: {
+    flex: 1,
+  },
+  languageName: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: Colors.text,
+    textTransform: 'capitalize',
+  },
+  languageLabel: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+  },
   achievementItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: Layout.spacing.md,
+    paddingVertical: Layout.spacing.sm,
   },
   achievementIcon: {
     fontSize: 24,
     marginRight: Layout.spacing.md,
   },
-  achievementText: {
+  achievementInfo: {
     flex: 1,
   },
   achievementTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '500',
     color: Colors.text,
   },
   achievementDescription: {
-    fontSize: 14,
+    fontSize: 12,
     color: Colors.textSecondary,
   },
   settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: Layout.spacing.sm,
+    paddingVertical: Layout.spacing.md,
   },
   settingText: {
     fontSize: 16,
@@ -298,6 +362,5 @@ const styles = StyleSheet.create({
   },
   footer: {
     padding: Layout.spacing.lg,
-    paddingBottom: Layout.spacing.xl,
   },
 });
